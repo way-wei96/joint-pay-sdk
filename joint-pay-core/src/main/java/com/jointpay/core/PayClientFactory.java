@@ -8,6 +8,7 @@ import com.jointpay.api.exception.JointPayException;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.ServiceLoader;
 
 /**
@@ -34,6 +35,15 @@ public final class PayClientFactory {
                             + " 的实现，请确认已引入对应渠道 Maven 模块");
         }
         return provider.create(config);
+    }
+
+    /** 当前 classpath 已注册（已引入对应 Maven 模块）的渠道。 */
+    public static Set<PayChannel> supportedChannels() {
+        return PROVIDERS.keySet();
+    }
+
+    public static boolean isSupported(PayChannel channel) {
+        return PROVIDERS.containsKey(channel);
     }
 
     private static Map<PayChannel, PayClientProvider> loadProviders() {

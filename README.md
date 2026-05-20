@@ -138,7 +138,7 @@ ProfitSharingResult ps = client.profitSharing().submit(
 |------|--------------|----------|-----------------|
 | 汇聚 | 商户号 | `apiSecret`（MD5）、`appId`（报备商户号） | `frpCode`（必填，如 `ALIPAY_H5`）、`openApiGateway` |
 | 汇聚 OpenAPI 分账 | 同上 | `privateKey`、`publicKey` | 网关默认 `https://api.huilianlink.com` |
-| 汇付 | `huifu_id` | `gatewayUrl` 指向斗拱网关 | `payType`、`apiPath`、`queryPath` |
+| 汇付 | `huifu_id` | `gatewayUrl` 指向斗拱网关；回调验签配 `publicKey` | `payType`、`apiPath`、`queryPath` |
 | 通联 | `cusid` | `apiSecret`、`gatewayUrl`、`appId`（`proid`） | `paytype`（必填）、`apiPath` |
 
 仅接一家渠道时，可只依赖 `joint-pay-core` + 对应 `joint-pay-xxx` 模块，不必引入 `joint-pay-all`。
@@ -155,4 +155,7 @@ HttpTransports.use(() -> new JdkHttpTransport(Duration.ofSeconds(10)));
 
 ```bash
 mvn verify   # 编译 + 单元测试（JDK 21）
+mvn -Prelease package   # 附带 sources/javadoc jar（发布前）
 ```
+
+运行时可用 `PayClientFactory.supportedChannels()` 查看当前 classpath 已加载的渠道实现。

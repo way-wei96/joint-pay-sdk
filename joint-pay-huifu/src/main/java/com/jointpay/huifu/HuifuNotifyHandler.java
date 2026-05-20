@@ -1,5 +1,6 @@
 package com.jointpay.huifu;
 
+import com.jointpay.api.config.ChannelConfig;
 import com.jointpay.api.exception.ErrorCode;
 import com.jointpay.api.exception.JointPayException;
 import com.jointpay.api.notify.NotifyHandler;
@@ -12,18 +13,28 @@ import com.jointpay.api.notify.RefundNotifyPayload;
 import com.jointpay.api.payment.PayStatus;
 import com.jointpay.api.profitsharing.ProfitSharingStatus;
 import com.jointpay.api.refund.RefundStatus;
+import com.jointpay.common.crypto.Rsa2SignUtil;
 import com.jointpay.common.json.Jsons;
 
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
- * 汇付天下回调解析（JSON 为主，签名字段以商户文档为准，可在 extras 扩展验签逻辑）。
+ * 汇付天下回调解析（JSON 为主）。若回调含 {@code sign} 且配置了 {@link ChannelConfig#getPublicKey()}，则做 RSA2 验签。
  */
 public final class HuifuNotifyHandler implements NotifyHandler {
+
+    private final ChannelConfig config;
+
+    public HuifuNotifyHandler(ChannelConfig config) {
+        this.config = config;
+    }
 
     @Override
     public NotifyParseResult parse(NotifyRawRequest request) {
         Map<String, Object> map = parsePayload(request);
+        verifySignIfPresent(map);
+
         if (isRefundNotify(map)) {
             return parseRefundNotify(map);
         }
@@ -47,6 +58,27 @@ public final class HuifuNotifyHandler implements NotifyHandler {
                 .pay(new PayNotifyPayload(outTradeNo, channelTradeNo, status, amountCent))
                 .successResponseBody(HuifuConstants.NOTIFY_SUCCESS_RESPONSE)
                 .build();
+    }
+
+    private void verifySignIfPresent(Map<String, Object> map) {
+        String remoteSign = Jsons.text(map, "sign");
+        if (remoteSign == null || remoteSign.isBlank()) {
+            return;
+        }
+        String publicKey = config.getPublicKey();
+        if (publicKey == null || publicKey.isBlank()) {
+            throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "汇付天下回调验签需配置 publicKey");
+        }
+        Map<String, String> params = new TreeMap<>();
+        map.forEach((k, v) -> {
+            if (v != null && !"sign".equals(k)) {
+                params.put(k, String.valueOf(v));
+            }
+        });
+        params.put("sign", remoteSign);
+        if (!Rsa2SignUtil.verify(params, publicKey)) {
+            throw new JointPayException(ErrorCode.SIGN_VERIFY_FAILED, "汇付天下回调验签失败");
+        }
     }
 
     private static NotifyParseResult parseProfitSharingNotify(Map<String, Object> map) {

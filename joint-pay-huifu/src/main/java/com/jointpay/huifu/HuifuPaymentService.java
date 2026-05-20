@@ -14,8 +14,9 @@ import com.jointpay.common.channel.ChannelApiClient;
 import com.jointpay.common.http.HttpResponse;
 import com.jointpay.api.profitsharing.ProfitSharingScheme;
 import com.jointpay.common.json.Jsons;
-import com.jointpay.common.profitsharing.ProfitSharingBindStores;
 import com.jointpay.common.payment.AbstractChannelPaymentService;
+import com.jointpay.common.profitsharing.ProfitSharingBindStores;
+import com.jointpay.common.util.ChannelRequestExtras;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -48,7 +49,7 @@ public final class HuifuPaymentService extends AbstractChannelPaymentService {
         body.put("notify_url", request.getNotifyUrl());
         body.put("pay_type", payType);
         applyBoundProfitSharing(request.getOutTradeNo(), body);
-        body.putAll(request.getExtras());
+        ChannelRequestExtras.mergeInto(body, request.getExtras());
 
         HttpResponse response = apiClient.postJson(path, body);
         return toPrepayResult(request.getOutTradeNo(), response.getBody());

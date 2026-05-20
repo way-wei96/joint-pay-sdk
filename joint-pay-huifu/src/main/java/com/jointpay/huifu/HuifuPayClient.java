@@ -36,6 +36,6 @@ public final class HuifuPayClient extends StubChannelPayClient {
 
     @Override
     protected NotifyHandler createNotifyHandler(String channelName) {
-        return new HuifuNotifyHandler();
+        return new HuifuNotifyHandler(getConfig());
     }
 }

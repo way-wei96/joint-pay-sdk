@@ -7,8 +7,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PayClientFactoryAllChannelsTest {
+
+    @Test
+    void reportsSupportedChannels() {
+        assertEquals(3, PayClientFactory.supportedChannels().size());
+        assertTrue(PayClientFactory.isSupported(PayChannel.JOINPAY));
+    }
 
     @Test
     void allChannelProvidersOnClasspath() {
