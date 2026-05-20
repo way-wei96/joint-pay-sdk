@@ -53,7 +53,7 @@ joint-pay-sdk/
 
 **当前进度**：
 - **P1 支付基础**：预下单、下单、查单、退款、回调已三家并行接入（汇聚较完整）
-- **P2 分账**：`profitsharing` 领域模型与 `ProfitSharingService` 已定义，三家渠道骨架已挂载，具体 OpenAPI 待按文档接入
+- **P2 分账**：契约已就绪；**汇聚** OpenAPI 分账提交/查询（RSA2）已实现；汇付/通联为 JSON 骨架；撤销/回退待接入
 
 ### 快速开始
 
@@ -121,3 +121,5 @@ ProfitSharingResult ps = client.profitSharing().submit(
                 .scheme(scheme)
                 .build());
 ```
+
+**汇聚 OpenAPI 分账**需额外配置：`appId`、`privateKey`（RSA2）、`extras.openApiGateway`（默认 `https://api.huilianlink.com`，与交易网关 `www.joinpay.com` 不同）。
