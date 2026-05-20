@@ -14,7 +14,9 @@ import com.jointpay.api.profitsharing.ProfitSharingStatus;
 import com.jointpay.common.channel.ChannelApiClient;
 import com.jointpay.common.http.HttpResponse;
 import com.jointpay.common.json.Jsons;
+import com.jointpay.api.config.ChannelExtras;
 import com.jointpay.common.profitsharing.AbstractChannelProfitSharingService;
+import com.jointpay.common.util.ChannelRequestExtras;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +44,7 @@ public final class HuifuProfitSharingService extends AbstractChannelProfitSharin
 
     @Override
     protected ProfitSharingResult doSubmit(ProfitSharingRequest request) {
-        String path = request.getExtras().getOrDefault("submitPath", DEFAULT_SUBMIT_PATH);
+        String path = request.getExtras().getOrDefault(ChannelExtras.Huifu.SUBMIT_PATH, DEFAULT_SUBMIT_PATH);
         Map<String, Object> body = new HashMap<>();
         body.put("huifu_id", config.getMerchantId());
         body.put("req_seq_id", request.getOutSharingNo());
@@ -50,6 +52,7 @@ public final class HuifuProfitSharingService extends AbstractChannelProfitSharin
             body.put("org_req_seq_id", request.getOutTradeNo());
         }
         body.put("acct_split_bunch", toSplitBunch(request.getScheme().getParticipants()));
+        ChannelRequestExtras.mergeInto(body, request.getExtras());
 
         HttpResponse response = apiClient.postJson(path, body);
         return toSubmitResult(request.getOutSharingNo(), response.getBody());

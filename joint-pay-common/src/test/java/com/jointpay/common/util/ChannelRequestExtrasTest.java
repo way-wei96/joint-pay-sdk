@@ -28,4 +28,18 @@ class ChannelRequestExtrasTest {
         assertEquals("{\"device_id\":\"D1\"}", body.get("terminal_device_info"));
         assertFalse(body.containsKey(ChannelExtras.Huifu.API_PATH));
     }
+
+    @Test
+    void mergeIntoStringMapSkipsRoutingKeys() {
+        Map<String, String> params = new java.util.TreeMap<>();
+        params.put("reqsn", "ORDER001");
+
+        ChannelRequestExtras.mergeIntoStringMap(params, Map.of(
+                ChannelExtras.Allinpay.PAY_TYPE, "WX",
+                "remark", "note"));
+
+        assertEquals("ORDER001", params.get("reqsn"));
+        assertEquals("note", params.get("remark"));
+        assertFalse(params.containsKey(ChannelExtras.Allinpay.PAY_TYPE));
+    }
 }

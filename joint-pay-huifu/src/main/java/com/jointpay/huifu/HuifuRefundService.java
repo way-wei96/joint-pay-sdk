@@ -11,7 +11,9 @@ import com.jointpay.api.refund.RefundStatus;
 import com.jointpay.common.channel.ChannelApiClient;
 import com.jointpay.common.http.HttpResponse;
 import com.jointpay.common.json.Jsons;
+import com.jointpay.api.config.ChannelExtras;
 import com.jointpay.common.refund.AbstractChannelRefundService;
+import com.jointpay.common.util.ChannelRequestExtras;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +34,7 @@ public final class HuifuRefundService extends AbstractChannelRefundService {
 
     @Override
     protected RefundResult doRefund(RefundRequest request) {
-        String path = request.getExtras().getOrDefault("refundPath", DEFAULT_REFUND_PATH);
+        String path = request.getExtras().getOrDefault(ChannelExtras.Huifu.REFUND_PATH, DEFAULT_REFUND_PATH);
         Map<String, Object> body = new HashMap<>();
         body.put("huifu_id", config.getMerchantId());
         body.put("req_seq_id", request.getOutRefundNo());
@@ -41,10 +43,11 @@ public final class HuifuRefundService extends AbstractChannelRefundService {
         if (request.getReason() != null) {
             body.put("remark", request.getReason());
         }
-        String notifyUrl = request.getExtras().get("notifyUrl");
+        String notifyUrl = request.getExtras().get(ChannelExtras.Huifu.NOTIFY_URL);
         if (notifyUrl != null) {
             body.put("notify_url", notifyUrl);
         }
+        ChannelRequestExtras.mergeInto(body, request.getExtras());
 
         HttpResponse response = apiClient.postJson(path, body);
         return toRefundResult(request.getOutRefundNo(), response.getBody());

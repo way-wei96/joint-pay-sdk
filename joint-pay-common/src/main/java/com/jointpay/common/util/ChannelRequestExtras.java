@@ -23,6 +23,10 @@ public final class ChannelRequestExtras {
         keys.add(ChannelExtras.Huifu.QUERY_PATH);
         keys.add(ChannelExtras.Huifu.PAY_TYPE);
         keys.add(ChannelExtras.Huifu.REFUND_PATH);
+        keys.add(ChannelExtras.Huifu.NOTIFY_URL);
+        keys.add(ChannelExtras.Huifu.SUBMIT_PATH);
+        keys.add(ChannelExtras.Huifu.CANCEL_PATH);
+        keys.add(ChannelExtras.Huifu.ROLLBACK_PATH);
         keys.add(ChannelExtras.Allinpay.API_PATH);
         keys.add(ChannelExtras.Allinpay.QUERY_PATH);
         keys.add(ChannelExtras.Allinpay.PAY_TYPE);
@@ -43,6 +47,20 @@ public final class ChannelRequestExtras {
                 continue;
             }
             body.putIfAbsent(key, entry.getValue());
+        }
+    }
+
+    /** 通联等字符串 Map 请求体的 extras 合并。 */
+    public static void mergeIntoStringMap(Map<String, String> params, Map<String, String> extras) {
+        if (extras == null || extras.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, String> entry : extras.entrySet()) {
+            String key = entry.getKey();
+            if (ROUTING_KEYS.contains(key)) {
+                continue;
+            }
+            params.putIfAbsent(key, entry.getValue());
         }
     }
 }

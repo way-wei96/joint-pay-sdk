@@ -52,7 +52,7 @@ joint-pay-sdk/
 ├── joint-pay-huifu/     # 汇付天下
 ├── joint-pay-allinpay/  # 通联支付
 ├── joint-pay-all/       # 聚合依赖，业务方一键引入三家渠道
-└── joint-pay-example/ # 使用示例（见 QuickStart）
+├── joint-pay-example/ # 使用示例（QuickStart、NotifyHandlerDemo、MockHttpDemo）
 ```
 
 **当前进度**：
@@ -159,3 +159,5 @@ mvn -Prelease package   # 附带 sources/javadoc jar（发布前）
 ```
 
 运行时可用 `PayClientFactory.supportedChannels()` 查看当前 classpath 已加载的渠道实现。
+
+发布到 Maven 仓库前可执行 `mvn -Prelease package`；父 POM 已包含 MIT 许可证与 SCM 元数据。

@@ -11,6 +11,29 @@
 
     <name>Joint Pay SDK</name>
     <description>联合企业支付统一 Java SDK</description>
+    <url>https://github.com/way-wei96/joint-pay-sdk</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>way-wei96</id>
+            <name>Wayne Wei</name>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git@github.com:way-wei96/joint-pay-sdk.git</connection>
+        <developerConnection>scm:git:git@github.com:way-wei96/joint-pay-sdk.git</developerConnection>
+        <url>https://github.com/way-wei96/joint-pay-sdk</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <modules>
         <module>joint-pay-api</module>

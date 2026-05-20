@@ -15,8 +15,9 @@ import com.jointpay.common.crypto.Md5SignUtil;
 import com.jointpay.common.http.HttpResponse;
 import com.jointpay.api.profitsharing.ProfitSharingScheme;
 import com.jointpay.common.json.Jsons;
-import com.jointpay.common.profitsharing.ProfitSharingBindStores;
 import com.jointpay.common.payment.AbstractChannelPaymentService;
+import com.jointpay.common.profitsharing.ProfitSharingBindStores;
+import com.jointpay.common.util.ChannelRequestExtras;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,6 +57,7 @@ public final class AllinpayPaymentService extends AbstractChannelPaymentService 
         params.put("paytype", payType);
         params.put("signtype", signType);
         applyBoundProfitSharing(request.getOutTradeNo(), params);
+        ChannelRequestExtras.mergeIntoStringMap(params, request.getExtras());
         params.put("sign", sign(params));
 
         HttpResponse response = apiClient.postJson(path, params);
