@@ -6,6 +6,7 @@ import com.jointpay.api.notify.NotifyParseResult;
 import com.jointpay.api.notify.NotifyRawRequest;
 import com.jointpay.api.notify.NotifyType;
 import com.jointpay.core.PayClientFactory;
+import com.jointpay.core.notify.NotifySupport;
 
 import java.util.Map;
 
@@ -34,7 +35,7 @@ public final class NotifyHandlerDemo {
                         "sign", "FROM_CHANNEL"))
                 .build();
 
-        NotifyParseResult result = client.notifyHandler().parse(raw);
+        NotifyParseResult result = NotifySupport.parse(client, raw);
         System.out.println("通知类型: " + result.getType());
         if (result.getType() == NotifyType.PAY) {
             System.out.println("支付单: " + result.getPay().getOutTradeNo());
@@ -43,6 +44,6 @@ public final class NotifyHandlerDemo {
         } else if (result.getType() == NotifyType.PROFIT_SHARING) {
             System.out.println("分账单: " + result.getProfitSharing().getOutSharingNo());
         }
-        System.out.println("应答渠道: " + result.getSuccessResponseBody());
+        System.out.println("应答渠道: " + NotifySupport.ackBody(result));
     }
 }

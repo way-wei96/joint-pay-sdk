@@ -24,11 +24,11 @@ public final class HuifuNotifyHandler implements NotifyHandler {
     @Override
     public NotifyParseResult parse(NotifyRawRequest request) {
         Map<String, Object> map = parsePayload(request);
-        if (isProfitSharingNotify(map)) {
-            return parseProfitSharingNotify(map);
-        }
         if (isRefundNotify(map)) {
             return parseRefundNotify(map);
+        }
+        if (isProfitSharingNotify(map)) {
+            return parseProfitSharingNotify(map);
         }
 
         String outTradeNo = firstNonBlank(
@@ -51,8 +51,8 @@ public final class HuifuNotifyHandler implements NotifyHandler {
 
     private static NotifyParseResult parseProfitSharingNotify(Map<String, Object> map) {
         String outSharingNo = firstNonBlank(
-                Jsons.text(map, "org_req_seq_id"),
-                Jsons.text(map, "req_seq_id"));
+                Jsons.text(map, "req_seq_id"),
+                Jsons.text(map, "org_req_seq_id"));
         if (outSharingNo == null) {
             throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "汇付天下分账回调缺少分账请求号");
         }
@@ -70,6 +70,9 @@ public final class HuifuNotifyHandler implements NotifyHandler {
     }
 
     private static boolean isProfitSharingNotify(Map<String, Object> map) {
+        if (Jsons.text(map, "refund_amt") != null || Jsons.text(map, "refund_seq_id") != null) {
+            return false;
+        }
         if (Jsons.text(map, "acct_split_bunch") != null || Jsons.text(map, "div_detail") != null) {
             return true;
         }
@@ -117,9 +120,6 @@ public final class HuifuNotifyHandler implements NotifyHandler {
     }
 
     private static boolean isRefundNotify(Map<String, Object> map) {
-        if (isProfitSharingNotify(map)) {
-            return false;
-        }
         if (Jsons.text(map, "refund_seq_id") != null || Jsons.text(map, "refund_amt") != null) {
             return true;
         }

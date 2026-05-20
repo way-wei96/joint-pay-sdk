@@ -77,6 +77,20 @@ public final class ChannelConfig {
         return new Builder(channel);
     }
 
+    /** 基于已有配置复制，便于仅覆盖网关等少量字段。 */
+    public static Builder builder(ChannelConfig source) {
+        return new Builder(source.channel)
+                .environment(source.environment)
+                .merchantId(source.merchantId)
+                .appId(source.appId)
+                .apiKey(source.apiKey)
+                .apiSecret(source.apiSecret)
+                .privateKey(source.privateKey)
+                .publicKey(source.publicKey)
+                .gatewayUrl(source.gatewayUrl)
+                .extras(source.extras);
+    }
+
     public static final class Builder {
         private final PayChannel channel;
         private ChannelEnvironment environment;

@@ -86,16 +86,6 @@ public final class JoinPayOpenApiClient {
         if (gateway.equals(config.getGatewayUrl())) {
             return config;
         }
-        return ChannelConfig.builder(config.getChannel())
-                .environment(config.getEnvironment())
-                .merchantId(config.getMerchantId())
-                .appId(config.getAppId())
-                .apiKey(config.getApiKey())
-                .apiSecret(config.getApiSecret())
-                .privateKey(config.getPrivateKey())
-                .publicKey(config.getPublicKey())
-                .gatewayUrl(gateway)
-                .extras(config.getExtras())
-                .build();
+        return ChannelConfig.builder(config).gatewayUrl(gateway).build();
     }
 }

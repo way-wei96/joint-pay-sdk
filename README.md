@@ -1,4 +1,7 @@
 # Joint-Pay-SDK
+
+![CI](https://github.com/way-wei96/joint-pay-sdk/actions/workflows/ci.yml/badge.svg)
+
 ## 联合企业支付统一 Java 开发 SDK
 
 ### 项目介绍
@@ -45,9 +48,9 @@ joint-pay-sdk/
 ├── joint-pay-api/       # 对外契约：领域模型、SPI 接口
 ├── joint-pay-common/    # HTTP、签名等跨渠道基础设施
 ├── joint-pay-core/      # PayClient 门面、工厂、占位 SPI
-├── joint-pay-joinpay/   # 汇聚支付（骨架已接入）
-├── joint-pay-huifu/     # 汇付天下（骨架已接入）
-├── joint-pay-allinpay/  # 通联支付（骨架已接入）
+├── joint-pay-joinpay/   # 汇聚支付
+├── joint-pay-huifu/     # 汇付天下
+├── joint-pay-allinpay/  # 通联支付
 ├── joint-pay-all/       # 聚合依赖，业务方一键引入三家渠道
 └── joint-pay-example/ # 使用示例（见 QuickStart）
 ```
@@ -127,4 +130,10 @@ ProfitSharingResult ps = client.profitSharing().submit(
 
 **下单绑分账**：先 `profitSharing().bindOnOrder(...)`，再 `payment().prepay(...)`，方案会在预下单时自动透传。默认 `ProfitSharingBindStores` 为进程内存储；集群请实现 `ProfitSharingBindStore` 并 `ProfitSharingBindStores.use(...)`（见 `joint-pay-example/CustomBindStoreDemo`）。
 
-**回调解析**：`client.notifyHandler().parse(NotifyRawRequest)`，支持支付 / 退款 / 分账（见 `NotifyHandlerDemo`）。
+**回调解析**：`NotifySupport.parse(client, raw)`，支持支付 / 退款 / 分账；`NotifySupport.ackBody(result)` 获取应答体（见 `NotifyHandlerDemo`）。
+
+### 开发与 CI
+
+```bash
+mvn verify   # 编译 + 单元测试（JDK 21）
+```
