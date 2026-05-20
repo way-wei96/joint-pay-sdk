@@ -22,6 +22,9 @@ public final class ChannelRequestExtras {
         keys.add(ChannelExtras.Huifu.API_PATH);
         keys.add(ChannelExtras.Huifu.QUERY_PATH);
         keys.add(ChannelExtras.Huifu.PAY_TYPE);
+        keys.add(ChannelExtras.Huifu.TRADE_TYPE);
+        keys.add(ChannelExtras.Huifu.SYS_ID);
+        keys.add(ChannelExtras.Huifu.PRODUCT_ID);
         keys.add(ChannelExtras.Huifu.REFUND_PATH);
         keys.add(ChannelExtras.Huifu.NOTIFY_URL);
         keys.add(ChannelExtras.Huifu.SUBMIT_PATH);

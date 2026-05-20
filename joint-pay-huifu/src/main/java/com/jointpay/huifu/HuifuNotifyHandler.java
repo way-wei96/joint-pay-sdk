@@ -17,10 +17,11 @@ import com.jointpay.common.crypto.Rsa2SignUtil;
 import com.jointpay.common.json.Jsons;
 
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
- * 汇付天下回调解析（JSON 为主）。若回调含 {@code sign} 且配置了 {@link ChannelConfig#getPublicKey()}，则做 RSA2 验签。
+ * 汇付斗拱异步通知。支付类多为 {@code resp_data} + {@code sign}（对 resp_data 原文验签）。
+ *
+ * @see <a href="https://spin.cloudpnr.com/topds/paramStandards.html">参数规定</a>
  */
 public final class HuifuNotifyHandler implements NotifyHandler {
 
@@ -32,8 +33,9 @@ public final class HuifuNotifyHandler implements NotifyHandler {
 
     @Override
     public NotifyParseResult parse(NotifyRawRequest request) {
-        Map<String, Object> map = parsePayload(request);
-        verifySignIfPresent(map);
+        Map<String, Object> envelope = parseEnvelope(request);
+        Map<String, Object> map = unwrapBusinessPayload(envelope);
+        verifyNotifySignIfPresent(envelope, map);
 
         if (isRefundNotify(map)) {
             return parseRefundNotify(map);
@@ -60,25 +62,73 @@ public final class HuifuNotifyHandler implements NotifyHandler {
                 .build();
     }
 
-    private void verifySignIfPresent(Map<String, Object> map) {
-        String remoteSign = Jsons.text(map, "sign");
-        if (remoteSign == null || remoteSign.isBlank()) {
+    private void verifyNotifySignIfPresent(Map<String, Object> envelope, Map<String, Object> business) {
+        String sign = firstNonBlank(Jsons.text(envelope, "sign"), Jsons.text(business, "sign"));
+        if (sign == null || sign.isBlank()) {
             return;
         }
         String publicKey = config.getPublicKey();
         if (publicKey == null || publicKey.isBlank()) {
             throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "汇付天下回调验签需配置 publicKey");
         }
-        Map<String, String> params = new TreeMap<>();
-        map.forEach((k, v) -> {
-            if (v != null && !"sign".equals(k)) {
-                params.put(k, String.valueOf(v));
-            }
-        });
-        params.put("sign", remoteSign);
-        if (!Rsa2SignUtil.verify(params, publicKey)) {
+        String signedContent = resolveSignedContent(envelope);
+        if (signedContent == null) {
+            return;
+        }
+        if (!Rsa2SignUtil.verifyContent(signedContent, sign, publicKey)) {
             throw new JointPayException(ErrorCode.SIGN_VERIFY_FAILED, "汇付天下回调验签失败");
         }
+    }
+
+    private static String resolveSignedContent(Map<String, Object> envelope) {
+        if (envelope.containsKey("resp_data")) {
+            Object respData = envelope.get("resp_data");
+            return respData == null ? null : String.valueOf(respData);
+        }
+        if (envelope.get("data") instanceof String dataStr) {
+            return dataStr;
+        }
+        return null;
+    }
+
+    private static Map<String, Object> unwrapBusinessPayload(Map<String, Object> envelope) {
+        if (envelope.containsKey("resp_data")) {
+            Object respData = envelope.get("resp_data");
+            if (respData instanceof Map<?, ?> map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> cast = (Map<String, Object>) map;
+                return cast;
+            }
+            return Jsons.parseMap(String.valueOf(respData));
+        }
+        return HuifuDougonClient.extractDataMap(envelope);
+    }
+
+    private static Map<String, Object> parseEnvelope(NotifyRawRequest request) {
+        if (request.getBody() != null && !request.getBody().isBlank()) {
+            String body = request.getBody().trim();
+            if (body.startsWith("{")) {
+                return Jsons.parseMap(body);
+            }
+            return parseFormLike(body);
+        }
+        if (!request.getParams().isEmpty()) {
+            Map<String, Object> map = new java.util.HashMap<>();
+            request.getParams().forEach(map::put);
+            return map;
+        }
+        throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "汇付天下回调内容为空");
+    }
+
+    private static Map<String, Object> parseFormLike(String body) {
+        Map<String, Object> map = new java.util.HashMap<>();
+        for (String pair : body.split("&")) {
+            int idx = pair.indexOf('=');
+            if (idx > 0) {
+                map.put(pair.substring(0, idx), pair.substring(idx + 1));
+            }
+        }
+        return map;
     }
 
     private static NotifyParseResult parseProfitSharingNotify(Map<String, Object> map) {
@@ -169,18 +219,6 @@ public final class HuifuNotifyHandler implements NotifyHandler {
             case "P", "PROCESSING" -> RefundStatus.PROCESSING;
             default -> RefundStatus.UNKNOWN;
         };
-    }
-
-    private static Map<String, Object> parsePayload(NotifyRawRequest request) {
-        if (request.getBody() != null && !request.getBody().isBlank()) {
-            return Jsons.parseMap(request.getBody());
-        }
-        if (!request.getParams().isEmpty()) {
-            Map<String, Object> map = new java.util.HashMap<>();
-            request.getParams().forEach(map::put);
-            return map;
-        }
-        throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "汇付天下回调内容为空");
     }
 
     private static PayStatus mapStatus(String stat) {

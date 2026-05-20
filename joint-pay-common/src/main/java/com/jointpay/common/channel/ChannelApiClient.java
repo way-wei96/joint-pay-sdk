@@ -10,6 +10,8 @@ import com.jointpay.common.http.HttpResponse;
 import com.jointpay.common.http.HttpTransport;
 import com.jointpay.common.http.HttpTransports;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,7 +37,11 @@ public class ChannelApiClient {
     }
 
     public HttpResponse postJson(String path, Object body) {
-        return post(path, HttpContentTypes.JSON, com.jointpay.common.json.Jsons.toJson(body));
+        return postJson(path, body, Map.of());
+    }
+
+    public HttpResponse postJson(String path, Object body, Map<String, String> queryParams) {
+        return post(appendQuery(path, queryParams), HttpContentTypes.JSON, com.jointpay.common.json.Jsons.toJson(body));
     }
 
     public HttpResponse postForm(String path, Map<String, String> form) {
@@ -66,5 +72,24 @@ public class ChannelApiClient {
             throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "gatewayUrl 未配置");
         }
         return gateway;
+    }
+
+    private String appendQuery(String path, Map<String, String> queryParams) {
+        if (queryParams == null || queryParams.isEmpty()) {
+            return path;
+        }
+        StringBuilder sb = new StringBuilder(path);
+        char separator = path.contains("?") ? '&' : '?';
+        for (Map.Entry<String, String> entry : queryParams.entrySet()) {
+            if (entry.getValue() == null || entry.getValue().isBlank()) {
+                continue;
+            }
+            sb.append(separator);
+            separator = '&';
+            sb.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8));
+            sb.append('=');
+            sb.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+        }
+        return sb.toString();
     }
 }

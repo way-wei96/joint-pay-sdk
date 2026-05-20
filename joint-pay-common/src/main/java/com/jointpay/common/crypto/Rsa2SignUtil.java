@@ -37,6 +37,38 @@ public final class Rsa2SignUtil {
         }
     }
 
+    /** 对原始报文字符串做 RSA2 签名（汇付斗拱对 {@code data} 字段签名）。 */
+    public static String signContent(String content, String privateKeyPemOrBase64) {
+        try {
+            PrivateKey privateKey = loadPrivateKey(privateKeyPemOrBase64);
+            Signature signature = Signature.getInstance("SHA256withRSA");
+            signature.initSign(privateKey);
+            signature.update(content.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(signature.sign());
+        } catch (JointPayException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new JointPayException(ErrorCode.INTERNAL_ERROR, "RSA2 签名失败", null, null, e);
+        }
+    }
+
+    public static boolean verifyContent(String content, String remoteSign, String publicKeyPemOrBase64) {
+        if (remoteSign == null || remoteSign.isBlank()) {
+            return false;
+        }
+        try {
+            PublicKey publicKey = loadPublicKey(publicKeyPemOrBase64);
+            Signature signature = Signature.getInstance("SHA256withRSA");
+            signature.initVerify(publicKey);
+            signature.update(content.getBytes(StandardCharsets.UTF_8));
+            return signature.verify(Base64.getDecoder().decode(remoteSign.trim()));
+        } catch (JointPayException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new JointPayException(ErrorCode.INTERNAL_ERROR, "RSA2 验签失败", null, null, e);
+        }
+    }
+
     public static boolean verify(Map<String, String> params, String publicKeyPemOrBase64) {
         String remoteSign = params.get("sign");
         if (remoteSign == null || remoteSign.isBlank()) {

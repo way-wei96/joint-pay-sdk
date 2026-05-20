@@ -56,8 +56,10 @@ joint-pay-sdk/
 ```
 
 **当前进度**：
-- **P1 支付基础**：预下单、下单、查单、退款、回调已三家并行接入（汇聚较完整）
-- **P2 分账**：三家均已挂载 submit/query/cancel/rollback（汇聚 RSA2 OpenAPI 较完整；字段以各渠道文档联调为准）
+- **P1 支付基础**：预下单、下单、查单、退款、回调已三家并行接入
+- **P2 分账**：三家均已挂载 submit/query/cancel/rollback
+- **汇付**：已按[斗拱参数规范](https://spin.cloudpnr.com/topds/paramStandards.html)实现出站 RSA2 信封（`sys_id`/`data`/`sign`）与 `resp_data` 回调验签；仍需沙箱联调校准
+- **通联**：MD5 签名 + 默认网关/文档链接；路径与字段以[收银宝文档](https://prodoc.allinpay.com/project/12/)为准
 
 ### 快速开始
 
@@ -138,8 +140,8 @@ ProfitSharingResult ps = client.profitSharing().submit(
 |------|--------------|----------|-----------------|
 | 汇聚 | 商户号 | `apiSecret`（MD5）、`appId`（报备商户号） | `frpCode`（必填，如 `ALIPAY_H5`）、`openApiGateway` |
 | 汇聚 OpenAPI 分账 | 同上 | `privateKey`、`publicKey` | 网关默认 `https://api.huilianlink.com` |
-| 汇付 | `huifu_id` | `gatewayUrl` 指向斗拱网关；回调验签配 `publicKey` | `payType`、`apiPath`、`queryPath` |
-| 通联 | `cusid` | `apiSecret`、`gatewayUrl`、`appId`（`proid`） | `paytype`（必填）、`apiPath` |
+| 汇付 | `huifu_id`（`merchantId`） | `apiKey`=`sys_id`，`appId`=`product_id`，`privateKey`，`publicKey`；默认网关 `https://api.huifu.com` | `tradeType`/`payType`（如 `T_MINIAPP`）、`apiPath`；[API 文档](https://paas.huifu.com/open/doc/api/) |
+| 通联 | `cusid` | `apiSecret`、`appId`（`proid`）；默认网关 `https://vsp.allinpay.com` | `paytype`（必填）、`apiPath`；[收银宝文档](https://prodoc.allinpay.com/project/12/) |
 
 仅接一家渠道时，可只依赖 `joint-pay-core` + 对应 `joint-pay-xxx` 模块，不必引入 `joint-pay-all`。
 

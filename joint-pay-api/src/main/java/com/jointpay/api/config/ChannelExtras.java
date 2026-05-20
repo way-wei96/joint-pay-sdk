@@ -22,11 +22,16 @@ public final class ChannelExtras {
         public static final String API_PATH = "apiPath";
         public static final String QUERY_PATH = "queryPath";
         public static final String PAY_TYPE = "payType";
+        public static final String TRADE_TYPE = "tradeType";
         public static final String REFUND_PATH = "refundPath";
         public static final String NOTIFY_URL = "notifyUrl";
         public static final String SUBMIT_PATH = "submitPath";
         public static final String CANCEL_PATH = "cancelPath";
         public static final String ROLLBACK_PATH = "rollbackPath";
+        /** 覆盖 apiKey，对应斗拱 sys_id */
+        public static final String SYS_ID = "sysId";
+        /** 覆盖 appId，对应斗拱 product_id */
+        public static final String PRODUCT_ID = "productId";
 
         private Huifu() {
         }

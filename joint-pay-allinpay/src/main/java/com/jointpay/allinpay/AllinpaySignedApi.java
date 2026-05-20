@@ -20,8 +20,15 @@ final class AllinpaySignedApi {
     private final ChannelApiClient http;
 
     AllinpaySignedApi(ChannelConfig config) {
-        this.config = config;
-        this.http = new ChannelApiClient(config);
+        this.config = withDefaultGateway(config);
+        this.http = new ChannelApiClient(this.config);
+    }
+
+    static ChannelConfig withDefaultGateway(ChannelConfig config) {
+        if (config.getGatewayUrl() != null && !config.getGatewayUrl().isBlank()) {
+            return config;
+        }
+        return ChannelConfig.builder(config).gatewayUrl(AllinpayConstants.DEFAULT_GATEWAY).build();
     }
 
     Map<String, Object> post(String path, Map<String, String> params) {

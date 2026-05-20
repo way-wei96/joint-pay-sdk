@@ -23,7 +23,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class HuifuNotifyHandlerTest {
 
     private final HuifuNotifyHandler handler = new HuifuNotifyHandler(
-            ChannelConfig.builder(PayChannel.HUIFU).merchantId("HF001").build());
+            ChannelConfig.builder(PayChannel.HUIFU)
+                    .merchantId("HF001")
+                    .apiKey("SYS001")
+                    .appId("PAYUN")
+                    .build());
 
     @Test
     void parsesPayNotify() {
@@ -69,19 +73,19 @@ class HuifuNotifyHandlerTest {
     }
 
     @Test
-    void verifiesRsa2SignWhenPresent() throws Exception {
+    void verifiesRespDataSignWhenPresent() throws Exception {
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
         generator.initialize(2048);
         KeyPair pair = generator.generateKeyPair();
         String privateKey = Base64.getEncoder().encodeToString(pair.getPrivate().getEncoded());
         String publicKey = Base64.getEncoder().encodeToString(pair.getPublic().getEncoded());
 
-        Map<String, String> params = new TreeMap<>();
-        params.put("req_seq_id", "ORDER002");
-        params.put("hf_seq_id", "HF004");
-        params.put("trans_stat", "S");
-        params.put("trans_amt", "1.00");
-        params.put("sign", Rsa2SignUtil.sign(params, privateKey));
+        String respData = Jsons.toJson(Map.of(
+                "req_seq_id", "ORDER002",
+                "hf_seq_id", "HF004",
+                "trans_stat", "S",
+                "trans_amt", "1.00"));
+        String sign = Rsa2SignUtil.signContent(respData, privateKey);
 
         ChannelConfig config = ChannelConfig.builder(PayChannel.HUIFU)
                 .merchantId("HF001")
@@ -89,7 +93,9 @@ class HuifuNotifyHandlerTest {
                 .build();
         HuifuNotifyHandler signedHandler = new HuifuNotifyHandler(config);
 
-        NotifyParseResult result = signedHandler.parse(NotifyRawRequest.builder().params(params).build());
+        NotifyParseResult result = signedHandler.parse(NotifyRawRequest.builder()
+                .params(Map.of("resp_data", respData, "sign", sign))
+                .build());
         assertEquals(NotifyType.PAY, result.getType());
         assertEquals("ORDER002", result.getPay().getOutTradeNo());
     }

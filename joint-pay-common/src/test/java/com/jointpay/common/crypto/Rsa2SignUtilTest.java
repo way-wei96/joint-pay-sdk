@@ -35,6 +35,19 @@ class Rsa2SignUtilTest {
     }
 
     @Test
+    void signContentRoundTrip() throws Exception {
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+        generator.initialize(2048);
+        KeyPair pair = generator.generateKeyPair();
+        String privateKey = Base64.getEncoder().encodeToString(pair.getPrivate().getEncoded());
+        String publicKey = Base64.getEncoder().encodeToString(pair.getPublic().getEncoded());
+
+        String content = "{\"huifu_id\":\"M1\",\"req_seq_id\":\"O1\"}";
+        String sign = Rsa2SignUtil.signContent(content, privateKey);
+        assertTrue(Rsa2SignUtil.verifyContent(content, sign, publicKey));
+    }
+
+    @Test
     void verifyFailsWhenTampered() throws Exception {
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
         generator.initialize(2048);
