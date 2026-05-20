@@ -51,7 +51,7 @@ joint-pay-sdk/
 └── joint-pay-all/       # 聚合依赖，业务方一键引入三家渠道
 ```
 
-**当前进度（支付基础 P1）**：预下单/创建订单/订单查询/支付回调已三家并行接入；汇聚实现较完整（含 MD5 验签）；退款待实现；分账（P2）未开始。
+**当前进度（支付基础 P1）**：预下单、下单、查单、退款、退款查询、支付/退款回调已三家并行接入；汇聚对接较完整；分账（P2）未开始。
 
 ### 快速开始
 
@@ -87,4 +87,16 @@ PrepayRequest request = PrepayRequest.builder()
         .extras(Map.of("frpCode", "ALIPAY_H5"))
         .build();
 PrepayResult result = PayClientFactory.create(config).payment().prepay(request);
+```
+
+**汇聚退款示例**（`extras.notifyUrl` 必填）：
+
+```java
+RefundRequest refund = RefundRequest.builder()
+        .outTradeNo("ORDER001")
+        .outRefundNo("REFUND001")
+        .refundAmountCent(100L)
+        .extras(Map.of("notifyUrl", "https://your.domain/refund-notify"))
+        .build();
+RefundResult refundResult = PayClientFactory.create(config).refund().refund(refund);
 ```

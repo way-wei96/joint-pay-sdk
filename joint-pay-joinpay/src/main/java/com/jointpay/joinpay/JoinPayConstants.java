@@ -5,6 +5,10 @@ public final class JoinPayConstants {
     public static final String DEFAULT_GATEWAY = "https://www.joinpay.com";
     public static final String UNI_PAY_PATH = "/trade/uniPayApi.action";
     public static final String QUERY_ORDER_PATH = "/trade/queryOrder.action";
+    public static final String REFUND_PATH = "/trade/refund.action";
+    public static final String QUERY_REFUND_PATH = "/trade/queryRefund.action";
+    public static final String REFUND_API_VERSION = "2.0";
+    public static final String EXTRA_NOTIFY_URL = "notifyUrl";
     public static final String NOTIFY_SUCCESS_RESPONSE = "success";
     public static final String API_VERSION = "2.1";
     public static final String CURRENCY_CNY = "1";

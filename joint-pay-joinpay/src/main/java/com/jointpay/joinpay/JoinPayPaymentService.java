@@ -184,7 +184,7 @@ public final class JoinPayPaymentService extends AbstractChannelPaymentService {
         return secret;
     }
 
-    private static ChannelConfig withDefaultGateway(ChannelConfig config) {
+    static ChannelConfig withDefaultGateway(ChannelConfig config) {
         if (config.getGatewayUrl() != null && !config.getGatewayUrl().isBlank()) {
             return config;
         }

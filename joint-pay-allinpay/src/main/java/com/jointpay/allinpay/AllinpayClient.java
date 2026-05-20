@@ -4,6 +4,7 @@ import com.jointpay.api.PayChannel;
 import com.jointpay.api.config.ChannelConfig;
 import com.jointpay.api.notify.NotifyHandler;
 import com.jointpay.api.payment.PaymentService;
+import com.jointpay.api.refund.RefundService;
 import com.jointpay.core.StubChannelPayClient;
 
 public final class AllinpayClient extends StubChannelPayClient {
@@ -20,6 +21,11 @@ public final class AllinpayClient extends StubChannelPayClient {
     @Override
     protected PaymentService createPaymentService(String channelName) {
         return new AllinpayPaymentService(getConfig());
+    }
+
+    @Override
+    protected RefundService createRefundService(String channelName) {
+        return new AllinpayRefundService(getConfig());
     }
 
     @Override
