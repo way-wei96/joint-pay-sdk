@@ -74,7 +74,67 @@ public final class AllinpayPaymentService extends AbstractChannelPaymentService 
 
     @Override
     protected OrderQueryResult doQueryOrder(OrderQueryRequest request) {
-        throw new JointPayException(ErrorCode.CHANNEL_UNSUPPORTED, "通联支付订单查询尚未实现");
+        String outTradeNo = request.getOutTradeNo();
+        if (outTradeNo == null || outTradeNo.isBlank()) {
+            throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "通联支付查单需提供 outTradeNo（reqsn）");
+        }
+        String path = AllinpayConstants.DEFAULT_QUERY_PATH;
+        String signType = "MD5";
+
+        Map<String, String> params = new TreeMap<>();
+        params.put("proid", requireAppId());
+        params.put("cusid", config.getMerchantId());
+        params.put("reqsn", outTradeNo);
+        if (request.getChannelTradeNo() != null && !request.getChannelTradeNo().isBlank()) {
+            params.put("trxid", request.getChannelTradeNo());
+        }
+        params.put("signtype", signType);
+        params.put("sign", sign(params));
+
+        HttpResponse response = apiClient.postJson(path, params);
+        return toQueryResult(outTradeNo, response.getBody());
+    }
+
+    private OrderQueryResult toQueryResult(String outTradeNo, String body) {
+        Map<String, Object> map = Jsons.parseMap(body);
+        Object code = map.get("code");
+        if (code instanceof Number num && num.intValue() != 200) {
+            throw new JointPayException(
+                    ErrorCode.CHANNEL_ERROR,
+                    "通联支付查单失败",
+                    String.valueOf(code),
+                    Jsons.text(map, "message"),
+                    null);
+        }
+        @SuppressWarnings("unchecked")
+        Map<String, Object> msg = map.get("msg") instanceof Map<?, ?> m
+                ? (Map<String, Object>) m
+                : map;
+        PayStatus status = mapAllinpayStatus(firstNonBlank(
+                Jsons.text(msg, "trxstatus"),
+                Jsons.text(msg, "status")));
+        long amountCent = parseAmount(firstNonBlank(Jsons.text(msg, "trxamt"), Jsons.text(msg, "amount")));
+        String channelTradeNo = firstNonBlank(Jsons.text(msg, "trxid"), Jsons.text(msg, "cusid"), outTradeNo);
+        return new OrderQueryResult(outTradeNo, channelTradeNo, status, amountCent);
+    }
+
+    private static PayStatus mapAllinpayStatus(String status) {
+        if (status == null) {
+            return PayStatus.UNKNOWN;
+        }
+        return switch (status) {
+            case "0000", "200", "SUCCESS" -> PayStatus.SUCCESS;
+            case "2000", "PROCESSING" -> PayStatus.PAYING;
+            case "3000", "FAIL" -> PayStatus.FAILED;
+            default -> PayStatus.UNKNOWN;
+        };
+    }
+
+    private static long parseAmount(String amt) {
+        if (amt == null || amt.isBlank()) {
+            return 0L;
+        }
+        return Long.parseLong(amt);
     }
 
     private String sign(Map<String, String> params) {

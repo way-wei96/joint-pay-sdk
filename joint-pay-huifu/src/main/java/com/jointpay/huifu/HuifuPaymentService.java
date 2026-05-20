@@ -69,7 +69,66 @@ public final class HuifuPaymentService extends AbstractChannelPaymentService {
 
     @Override
     protected OrderQueryResult doQueryOrder(OrderQueryRequest request) {
-        throw new JointPayException(ErrorCode.CHANNEL_UNSUPPORTED, "汇付天下订单查询尚未实现");
+        String outTradeNo = request.getOutTradeNo();
+        if (outTradeNo == null || outTradeNo.isBlank()) {
+            throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "汇付天下查单需提供 outTradeNo（req_seq_id）");
+        }
+        String path = HuifuConstants.DEFAULT_QUERY_PATH;
+        Map<String, Object> body = new HashMap<>();
+        body.put("huifu_id", config.getMerchantId());
+        body.put("req_seq_id", outTradeNo);
+        if (request.getChannelTradeNo() != null && !request.getChannelTradeNo().isBlank()) {
+            body.put("hf_seq_id", request.getChannelTradeNo());
+        }
+
+        HttpResponse response = apiClient.postJson(path, body);
+        return toQueryResult(outTradeNo, response.getBody());
+    }
+
+    private OrderQueryResult toQueryResult(String outTradeNo, String body) {
+        Map<String, Object> map = Jsons.parseMap(body);
+        String respCode = firstNonBlank(
+                Jsons.text(map, "resp_code"),
+                Jsons.text(map, "trans_stat"));
+        if (respCode != null && !isHuifuSuccessCode(respCode)) {
+            throw new JointPayException(
+                    ErrorCode.CHANNEL_ERROR,
+                    "汇付天下查单失败",
+                    respCode,
+                    Jsons.text(map, "resp_desc"),
+                    null);
+        }
+        PayStatus status = mapHuifuStatus(firstNonBlank(
+                Jsons.text(map, "trans_stat"),
+                Jsons.text(map, "order_status"),
+                respCode));
+        long amountCent = yuanToCent(firstNonBlank(Jsons.text(map, "trans_amt"), Jsons.text(map, "ord_amt")));
+        String channelTradeNo = firstNonBlank(Jsons.text(map, "hf_seq_id"), outTradeNo);
+        return new OrderQueryResult(outTradeNo, channelTradeNo, status, amountCent);
+    }
+
+    private static boolean isHuifuSuccessCode(String code) {
+        return "00000000".equals(code) || "00000100".equals(code) || "S".equalsIgnoreCase(code) || "SUCCESS".equalsIgnoreCase(code);
+    }
+
+    private static PayStatus mapHuifuStatus(String stat) {
+        if (stat == null) {
+            return PayStatus.UNKNOWN;
+        }
+        return switch (stat.toUpperCase()) {
+            case "S", "SUCCESS", "00000000" -> PayStatus.SUCCESS;
+            case "P", "PROCESSING" -> PayStatus.PAYING;
+            case "F", "FAIL", "FAILED" -> PayStatus.FAILED;
+            case "C", "CLOSED", "CANCEL" -> PayStatus.CLOSED;
+            default -> PayStatus.UNKNOWN;
+        };
+    }
+
+    private static long yuanToCent(String yuan) {
+        if (yuan == null || yuan.isBlank()) {
+            return 0L;
+        }
+        return Math.round(Double.parseDouble(yuan) * 100);
     }
 
     private PrepayResult toPrepayResult(String outTradeNo, String body) {

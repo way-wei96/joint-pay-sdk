@@ -11,7 +11,6 @@ import com.jointpay.api.payment.PayStatus;
 import com.jointpay.api.payment.PrepayRequest;
 import com.jointpay.api.payment.PrepayResult;
 import com.jointpay.common.channel.ChannelApiClient;
-import com.jointpay.common.crypto.Md5SignUtil;
 import com.jointpay.common.http.HttpResponse;
 import com.jointpay.common.json.Jsons;
 import com.jointpay.common.payment.AbstractChannelPaymentService;
@@ -39,7 +38,7 @@ public final class JoinPayPaymentService extends AbstractChannelPaymentService {
     protected PrepayResult doPrepay(PrepayRequest request) {
         Map<String, String> params = buildUniPayParams(request);
         String secret = requireApiSecret();
-        params.put("hmac", Md5SignUtil.signOrderedValues(params, secret));
+        params.put("hmac", JoinPaySignUtil.sign(params, secret));
 
         HttpResponse response = apiClient.postForm(JoinPayConstants.UNI_PAY_PATH, params);
         return toPrepayResult(response.getBody());
@@ -64,7 +63,64 @@ public final class JoinPayPaymentService extends AbstractChannelPaymentService {
 
     @Override
     protected OrderQueryResult doQueryOrder(OrderQueryRequest request) {
-        throw new JointPayException(ErrorCode.CHANNEL_UNSUPPORTED, "汇聚支付订单查询尚未实现");
+        String outTradeNo = request.getOutTradeNo();
+        if (outTradeNo == null || outTradeNo.isBlank()) {
+            throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "汇聚支付查单需提供 outTradeNo");
+        }
+        LinkedHashMap<String, String> params = new LinkedHashMap<>();
+        params.put("p1_MerchantNo", config.getMerchantId());
+        params.put("p2_OrderNo", outTradeNo);
+        String secret = requireApiSecret();
+        params.put("hmac", JoinPaySignUtil.sign(params, secret));
+
+        HttpResponse response = apiClient.postForm(JoinPayConstants.QUERY_ORDER_PATH, params);
+        return toQueryResult(outTradeNo, response.getBody());
+    }
+
+    private OrderQueryResult toQueryResult(String outTradeNo, String body) {
+        Map<String, Object> map = Jsons.parseMap(body);
+        String code = Jsons.text(map, "rb_Code");
+        if (!"100".equals(code)) {
+            throw new JointPayException(
+                    ErrorCode.CHANNEL_ERROR,
+                    "汇聚支付查单失败",
+                    code,
+                    Jsons.text(map, "rb_CodeMsg"),
+                    null);
+        }
+        PayStatus status = mapJoinPayStatus(Jsons.text(map, "ra_Status"));
+        long amountCent = yuanToCent(Jsons.text(map, "r3_Amount"));
+        String channelTradeNo = firstNonBlank(Jsons.text(map, "r7_TrxNo"), outTradeNo);
+        return new OrderQueryResult(outTradeNo, channelTradeNo, status, amountCent);
+    }
+
+    private static PayStatus mapJoinPayStatus(String raStatus) {
+        if (raStatus == null) {
+            return PayStatus.UNKNOWN;
+        }
+        return switch (raStatus) {
+            case "100" -> PayStatus.SUCCESS;
+            case "101" -> PayStatus.FAILED;
+            case "102" -> PayStatus.WAIT_PAY;
+            case "103" -> PayStatus.CLOSED;
+            default -> PayStatus.UNKNOWN;
+        };
+    }
+
+    private static long yuanToCent(String yuan) {
+        if (yuan == null || yuan.isBlank()) {
+            return 0L;
+        }
+        return new BigDecimal(yuan).movePointRight(2).longValue();
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private Map<String, String> buildUniPayParams(PrepayRequest request) {
