@@ -3,7 +3,6 @@ package com.jointpay.huifu;
 import com.jointpay.api.config.ChannelConfig;
 import com.jointpay.api.exception.ErrorCode;
 import com.jointpay.api.exception.JointPayException;
-import com.jointpay.api.profitsharing.ProfitSharingBindRequest;
 import com.jointpay.api.profitsharing.ProfitSharingCancelRequest;
 import com.jointpay.api.profitsharing.ProfitSharingParticipant;
 import com.jointpay.api.profitsharing.ProfitSharingQueryRequest;
@@ -16,7 +15,6 @@ import com.jointpay.common.channel.ChannelApiClient;
 import com.jointpay.common.http.HttpResponse;
 import com.jointpay.common.json.Jsons;
 import com.jointpay.common.profitsharing.AbstractChannelProfitSharingService;
-import com.jointpay.common.profitsharing.InMemoryProfitSharingBindStore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,11 +38,6 @@ public final class HuifuProfitSharingService extends AbstractChannelProfitSharin
         super("汇付天下");
         this.config = config;
         this.apiClient = new ChannelApiClient(config);
-    }
-
-    @Override
-    protected void doBindOnOrder(ProfitSharingBindRequest request) {
-        InMemoryProfitSharingBindStore.put(request.getOutTradeNo(), request.getScheme());
     }
 
     @Override

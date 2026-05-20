@@ -13,6 +13,7 @@ import com.jointpay.api.notify.RefundNotifyPayload;
 import com.jointpay.api.payment.PayStatus;
 import com.jointpay.api.profitsharing.ProfitSharingStatus;
 import com.jointpay.api.refund.RefundStatus;
+import com.jointpay.common.crypto.Rsa2SignUtil;
 import com.jointpay.common.json.Jsons;
 
 import java.math.BigDecimal;
@@ -38,6 +39,7 @@ public final class JoinPayNotifyHandler implements NotifyHandler {
         }
 
         if (isProfitSharingNotify(params)) {
+            verifyOpenApiSignIfPresent(params);
             return parseProfitSharingNotify(params);
         }
 
@@ -150,6 +152,21 @@ public final class JoinPayNotifyHandler implements NotifyHandler {
             }
         }
         return null;
+    }
+
+    private void verifyOpenApiSignIfPresent(Map<String, String> params) {
+        if (!params.containsKey("sign")) {
+            return;
+        }
+        String publicKey = config.getPublicKey();
+        if (publicKey == null || publicKey.isBlank()) {
+            throw new JointPayException(
+                    ErrorCode.INVALID_ARGUMENT,
+                    "汇聚 OpenAPI 分账回调验签需配置 publicKey（平台公钥）");
+        }
+        if (!Rsa2SignUtil.verify(params, publicKey)) {
+            throw new JointPayException(ErrorCode.SIGN_VERIFY_FAILED, "汇聚 OpenAPI 分账回调验签失败");
+        }
     }
 
     private void verifySign(Map<String, String> params) {

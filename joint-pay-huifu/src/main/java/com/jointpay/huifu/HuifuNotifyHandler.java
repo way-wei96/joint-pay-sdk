@@ -8,8 +8,10 @@ import com.jointpay.api.notify.NotifyRawRequest;
 import com.jointpay.api.notify.NotifyType;
 import com.jointpay.api.notify.PayNotifyPayload;
 import com.jointpay.api.notify.ProfitSharingNotifyPayload;
+import com.jointpay.api.notify.RefundNotifyPayload;
 import com.jointpay.api.payment.PayStatus;
 import com.jointpay.api.profitsharing.ProfitSharingStatus;
+import com.jointpay.api.refund.RefundStatus;
 import com.jointpay.common.json.Jsons;
 
 import java.util.Map;
@@ -24,6 +26,9 @@ public final class HuifuNotifyHandler implements NotifyHandler {
         Map<String, Object> map = parsePayload(request);
         if (isProfitSharingNotify(map)) {
             return parseProfitSharingNotify(map);
+        }
+        if (isRefundNotify(map)) {
+            return parseRefundNotify(map);
         }
 
         String outTradeNo = firstNonBlank(
@@ -87,6 +92,50 @@ public final class HuifuNotifyHandler implements NotifyHandler {
             case "F", "FAIL" -> ProfitSharingStatus.FAILED;
             case "P", "PROCESSING" -> ProfitSharingStatus.PROCESSING;
             default -> ProfitSharingStatus.UNKNOWN;
+        };
+    }
+
+    private static NotifyParseResult parseRefundNotify(Map<String, Object> map) {
+        String outRefundNo = firstNonBlank(
+                Jsons.text(map, "req_seq_id"),
+                Jsons.text(map, "out_refund_seq_id"));
+        if (outRefundNo == null) {
+            throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "汇付天下退款回调缺少退款请求号");
+        }
+        RefundNotifyPayload payload = new RefundNotifyPayload(
+                firstNonBlank(Jsons.text(map, "org_req_seq_id"), Jsons.text(map, "out_ord_id")),
+                outRefundNo,
+                firstNonBlank(Jsons.text(map, "hf_seq_id"), outRefundNo),
+                mapRefundStatus(firstNonBlank(
+                        Jsons.text(map, "trans_stat"),
+                        Jsons.text(map, "order_status"))),
+                parseAmount(firstNonBlank(Jsons.text(map, "refund_amt"), Jsons.text(map, "ord_amt"))));
+        return NotifyParseResult.builder(NotifyType.REFUND)
+                .refund(payload)
+                .successResponseBody(HuifuConstants.NOTIFY_SUCCESS_RESPONSE)
+                .build();
+    }
+
+    private static boolean isRefundNotify(Map<String, Object> map) {
+        if (isProfitSharingNotify(map)) {
+            return false;
+        }
+        if (Jsons.text(map, "refund_seq_id") != null || Jsons.text(map, "refund_amt") != null) {
+            return true;
+        }
+        String notifyType = firstNonBlank(Jsons.text(map, "notify_type"), Jsons.text(map, "event_type"));
+        return notifyType != null && notifyType.toUpperCase().contains("REFUND");
+    }
+
+    private static RefundStatus mapRefundStatus(String stat) {
+        if (stat == null) {
+            return RefundStatus.UNKNOWN;
+        }
+        return switch (stat.toUpperCase()) {
+            case "S", "SUCCESS" -> RefundStatus.SUCCESS;
+            case "F", "FAIL" -> RefundStatus.FAILED;
+            case "P", "PROCESSING" -> RefundStatus.PROCESSING;
+            default -> RefundStatus.UNKNOWN;
         };
     }
 

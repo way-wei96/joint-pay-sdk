@@ -104,7 +104,7 @@ RefundRequest refund = RefundRequest.builder()
 RefundResult refundResult = PayClientFactory.create(config).refund().refund(refund);
 ```
 
-**分账示例**（契约已就绪，渠道实现接入前调用将返回 `CHANNEL_UNSUPPORTED`）：
+**分账提交示例**（汇聚走 OpenAPI RSA2）：
 
 ```java
 ProfitSharingScheme scheme = new ProfitSharingScheme(
@@ -123,6 +123,8 @@ ProfitSharingResult ps = client.profitSharing().submit(
                 .build());
 ```
 
-**汇聚 OpenAPI 分账**需额外配置：`appId`、`privateKey`（RSA2）、`extras.openApiGateway`（默认 `https://api.huilianlink.com`，与交易网关 `www.joinpay.com` 不同）。
+**汇聚 OpenAPI 分账**需额外配置：`appId`、`privateKey`（RSA2）、`publicKey`（平台公钥，分账回调验签）、`extras.openApiGateway`（默认 `https://api.huilianlink.com`，与交易网关 `www.joinpay.com` 不同）。
 
-**下单绑分账**：先 `profitSharing().bindOnOrder(...)`，再 `payment().prepay(...)`，方案会在预下单时自动透传（`InMemoryProfitSharingBindStore`，单机有效）。
+**下单绑分账**：先 `profitSharing().bindOnOrder(...)`，再 `payment().prepay(...)`，方案会在预下单时自动透传。默认 `ProfitSharingBindStores` 为进程内存储；集群请实现 `ProfitSharingBindStore` 并 `ProfitSharingBindStores.use(...)`（见 `joint-pay-example/CustomBindStoreDemo`）。
+
+**回调解析**：`client.notifyHandler().parse(NotifyRawRequest)`，支持支付 / 退款 / 分账（见 `NotifyHandlerDemo`）。

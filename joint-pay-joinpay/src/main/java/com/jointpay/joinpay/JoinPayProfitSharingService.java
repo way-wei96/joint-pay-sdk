@@ -3,7 +3,6 @@ package com.jointpay.joinpay;
 import com.jointpay.api.config.ChannelConfig;
 import com.jointpay.api.exception.ErrorCode;
 import com.jointpay.api.exception.JointPayException;
-import com.jointpay.api.profitsharing.ProfitSharingBindRequest;
 import com.jointpay.api.profitsharing.ProfitSharingCancelRequest;
 import com.jointpay.api.profitsharing.ProfitSharingMode;
 import com.jointpay.api.profitsharing.ProfitSharingParticipant;
@@ -15,7 +14,6 @@ import com.jointpay.api.profitsharing.ProfitSharingRollbackRequest;
 import com.jointpay.api.profitsharing.ProfitSharingStatus;
 import com.jointpay.common.json.Jsons;
 import com.jointpay.common.profitsharing.AbstractChannelProfitSharingService;
-import com.jointpay.common.profitsharing.InMemoryProfitSharingBindStore;
 import com.jointpay.joinpay.openapi.JoinPayOpenApiClient;
 import com.jointpay.joinpay.openapi.JoinPayOpenApiConstants;
 
@@ -36,11 +34,6 @@ public final class JoinPayProfitSharingService extends AbstractChannelProfitShar
     public JoinPayProfitSharingService(ChannelConfig config) {
         super("汇聚支付");
         this.openApi = new JoinPayOpenApiClient(config);
-    }
-
-    @Override
-    protected void doBindOnOrder(ProfitSharingBindRequest request) {
-        InMemoryProfitSharingBindStore.put(request.getOutTradeNo(), request.getScheme());
     }
 
     @Override

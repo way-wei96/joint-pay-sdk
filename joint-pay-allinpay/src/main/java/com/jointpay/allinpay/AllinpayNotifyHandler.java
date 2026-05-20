@@ -9,8 +9,10 @@ import com.jointpay.api.notify.NotifyRawRequest;
 import com.jointpay.api.notify.NotifyType;
 import com.jointpay.api.notify.PayNotifyPayload;
 import com.jointpay.api.notify.ProfitSharingNotifyPayload;
+import com.jointpay.api.notify.RefundNotifyPayload;
 import com.jointpay.api.payment.PayStatus;
 import com.jointpay.api.profitsharing.ProfitSharingStatus;
+import com.jointpay.api.refund.RefundStatus;
 import com.jointpay.common.crypto.Md5SignUtil;
 import com.jointpay.common.json.Jsons;
 
@@ -40,6 +42,9 @@ public final class AllinpayNotifyHandler implements NotifyHandler {
         if (isProfitSharingNotify(params)) {
             return parseProfitSharingNotify(params);
         }
+        if (isRefundNotify(params)) {
+            return parseRefundNotify(params);
+        }
 
         String outTradeNo = firstNonBlank(params.get("reqsn"), params.get("cusorderid"));
         PayStatus status = mapStatus(firstNonBlank(params.get("trxstatus"), params.get("status")));
@@ -50,6 +55,46 @@ public final class AllinpayNotifyHandler implements NotifyHandler {
                 .pay(new PayNotifyPayload(outTradeNo, channelTradeNo, status, amountCent))
                 .successResponseBody(AllinpayConstants.NOTIFY_SUCCESS_RESPONSE)
                 .build();
+    }
+
+    private static NotifyParseResult parseRefundNotify(Map<String, String> params) {
+        String outRefundNo = firstNonBlank(params.get("reqsn"), params.get("refundno"));
+        if (outRefundNo == null) {
+            throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "通联支付退款回调缺少退款单号");
+        }
+        RefundNotifyPayload payload = new RefundNotifyPayload(
+                firstNonBlank(params.get("oldreqsn"), params.get("cusorderid")),
+                outRefundNo,
+                firstNonBlank(params.get("trxid"), outRefundNo),
+                mapRefundStatus(firstNonBlank(params.get("trxstatus"), params.get("status"))),
+                parseAmount(params.get("trxamt")));
+        return NotifyParseResult.builder(NotifyType.REFUND)
+                .refund(payload)
+                .successResponseBody(AllinpayConstants.NOTIFY_SUCCESS_RESPONSE)
+                .build();
+    }
+
+    private static boolean isRefundNotify(Map<String, String> params) {
+        if (isProfitSharingNotify(params)) {
+            return false;
+        }
+        if (params.containsKey("refundno")) {
+            return true;
+        }
+        String trxtype = params.get("trxtype");
+        return trxtype != null && trxtype.toUpperCase().contains("REFUND");
+    }
+
+    private static RefundStatus mapRefundStatus(String status) {
+        if (status == null) {
+            return RefundStatus.UNKNOWN;
+        }
+        return switch (status) {
+            case "0000", "200" -> RefundStatus.SUCCESS;
+            case "2000" -> RefundStatus.PROCESSING;
+            case "3000" -> RefundStatus.FAILED;
+            default -> RefundStatus.UNKNOWN;
+        };
     }
 
     private static NotifyParseResult parseProfitSharingNotify(Map<String, String> params) {

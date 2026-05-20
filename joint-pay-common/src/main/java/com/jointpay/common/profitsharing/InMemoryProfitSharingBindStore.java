@@ -1,30 +1,25 @@
 package com.jointpay.common.profitsharing;
 
+import com.jointpay.api.profitsharing.ProfitSharingBindStore;
 import com.jointpay.api.profitsharing.ProfitSharingScheme;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 进程内「下单绑分账」方案存储（单机适用；集群部署请由业务方自行持有方案）。
+ * 进程内「下单绑分账」方案存储（单机适用；集群部署请 {@link ProfitSharingBindStores#use} 替换）。
  */
-public final class InMemoryProfitSharingBindStore {
+public final class InMemoryProfitSharingBindStore implements ProfitSharingBindStore {
 
-    private static final Map<String, ProfitSharingScheme> BINDINGS = new ConcurrentHashMap<>();
+    private final Map<String, ProfitSharingScheme> bindings = new ConcurrentHashMap<>();
 
-    private InMemoryProfitSharingBindStore() {
+    @Override
+    public void put(String outTradeNo, ProfitSharingScheme scheme) {
+        bindings.put(outTradeNo, scheme);
     }
 
-    public static void put(String outTradeNo, ProfitSharingScheme scheme) {
-        BINDINGS.put(outTradeNo, scheme);
-    }
-
-    public static ProfitSharingScheme get(String outTradeNo) {
-        return BINDINGS.get(outTradeNo);
-    }
-
-    /** 取出并移除，避免重复应用到多笔订单。 */
-    public static ProfitSharingScheme take(String outTradeNo) {
-        return BINDINGS.remove(outTradeNo);
+    @Override
+    public ProfitSharingScheme take(String outTradeNo) {
+        return bindings.remove(outTradeNo);
     }
 }

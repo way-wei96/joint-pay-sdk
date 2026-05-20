@@ -15,7 +15,7 @@ import com.jointpay.common.crypto.Md5SignUtil;
 import com.jointpay.common.http.HttpResponse;
 import com.jointpay.api.profitsharing.ProfitSharingScheme;
 import com.jointpay.common.json.Jsons;
-import com.jointpay.common.profitsharing.InMemoryProfitSharingBindStore;
+import com.jointpay.common.profitsharing.ProfitSharingBindStores;
 import com.jointpay.common.payment.AbstractChannelPaymentService;
 
 import java.util.ArrayList;
@@ -183,7 +183,7 @@ public final class AllinpayPaymentService extends AbstractChannelPaymentService 
     }
 
     private void applyBoundProfitSharing(String outTradeNo, Map<String, String> params) {
-        ProfitSharingScheme scheme = InMemoryProfitSharingBindStore.take(outTradeNo);
+        ProfitSharingScheme scheme = ProfitSharingBindStores.take(outTradeNo);
         if (scheme == null) {
             return;
         }

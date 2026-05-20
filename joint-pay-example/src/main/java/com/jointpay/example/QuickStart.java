@@ -25,6 +25,7 @@ public final class QuickStart {
                 .apiSecret("YOUR_MD5_SECRET")
                 .appId("YOUR_TRADE_MERCHANT_NO")
                 .privateKey("YOUR_RSA_PRIVATE_KEY_FOR_OPENAPI")
+                .publicKey("PLATFORM_RSA_PUBLIC_KEY_FOR_OPENAPI_NOTIFY")
                 .extras(Map.of("openApiGateway", "https://api.huilianlink.com"))
                 .build();
 

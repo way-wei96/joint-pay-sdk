@@ -14,7 +14,7 @@ import com.jointpay.common.channel.ChannelApiClient;
 import com.jointpay.common.http.HttpResponse;
 import com.jointpay.common.json.Jsons;
 import com.jointpay.api.profitsharing.ProfitSharingScheme;
-import com.jointpay.common.profitsharing.InMemoryProfitSharingBindStore;
+import com.jointpay.common.profitsharing.ProfitSharingBindStores;
 import com.jointpay.common.payment.AbstractChannelPaymentService;
 
 import java.math.BigDecimal;
@@ -162,7 +162,7 @@ public final class JoinPayPaymentService extends AbstractChannelPaymentService {
     }
 
     private void applyBoundProfitSharing(String outTradeNo, Map<String, String> params) {
-        ProfitSharingScheme scheme = InMemoryProfitSharingBindStore.take(outTradeNo);
+        ProfitSharingScheme scheme = ProfitSharingBindStores.take(outTradeNo);
         if (scheme == null) {
             return;
         }

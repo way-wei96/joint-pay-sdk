@@ -59,7 +59,9 @@ public abstract class AbstractChannelProfitSharingService implements ProfitShari
         return doRollback(request);
     }
 
-    protected abstract void doBindOnOrder(ProfitSharingBindRequest request);
+    protected void doBindOnOrder(ProfitSharingBindRequest request) {
+        ProfitSharingBindStores.put(request.getOutTradeNo(), request.getScheme());
+    }
 
     protected abstract ProfitSharingResult doSubmit(ProfitSharingRequest request);
 
