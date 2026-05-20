@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.jointpay</groupId>
+        <artifactId>joint-pay-sdk</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>joint-pay-all</artifactId>
+    <name>Joint Pay All</name>
+    <description>聚合依赖：core + 三家渠道，便于业务方一键引入</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.jointpay</groupId>
+            <artifactId>joint-pay-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.jointpay</groupId>
+            <artifactId>joint-pay-joinpay</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.jointpay</groupId>
+            <artifactId>joint-pay-huifu</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.jointpay</groupId>
+            <artifactId>joint-pay-allinpay</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>

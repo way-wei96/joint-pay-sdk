@@ -16,6 +16,10 @@
         <module>joint-pay-api</module>
         <module>joint-pay-common</module>
         <module>joint-pay-core</module>
+        <module>joint-pay-joinpay</module>
+        <module>joint-pay-huifu</module>
+        <module>joint-pay-allinpay</module>
+        <module>joint-pay-all</module>
     </modules>
 
     <properties>
