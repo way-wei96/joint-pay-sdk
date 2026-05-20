@@ -16,6 +16,7 @@ import com.jointpay.common.channel.ChannelApiClient;
 import com.jointpay.common.http.HttpResponse;
 import com.jointpay.common.json.Jsons;
 import com.jointpay.common.profitsharing.AbstractChannelProfitSharingService;
+import com.jointpay.common.profitsharing.InMemoryProfitSharingBindStore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,7 +44,7 @@ public final class HuifuProfitSharingService extends AbstractChannelProfitSharin
 
     @Override
     protected void doBindOnOrder(ProfitSharingBindRequest request) {
-        throw new JointPayException(ErrorCode.CHANNEL_UNSUPPORTED, "汇付天下下单绑分账待接入");
+        InMemoryProfitSharingBindStore.put(request.getOutTradeNo(), request.getScheme());
     }
 
     @Override

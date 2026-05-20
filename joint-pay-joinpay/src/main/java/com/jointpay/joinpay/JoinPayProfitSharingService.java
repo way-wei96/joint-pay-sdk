@@ -15,6 +15,7 @@ import com.jointpay.api.profitsharing.ProfitSharingRollbackRequest;
 import com.jointpay.api.profitsharing.ProfitSharingStatus;
 import com.jointpay.common.json.Jsons;
 import com.jointpay.common.profitsharing.AbstractChannelProfitSharingService;
+import com.jointpay.common.profitsharing.InMemoryProfitSharingBindStore;
 import com.jointpay.joinpay.openapi.JoinPayOpenApiClient;
 import com.jointpay.joinpay.openapi.JoinPayOpenApiConstants;
 
@@ -39,7 +40,7 @@ public final class JoinPayProfitSharingService extends AbstractChannelProfitShar
 
     @Override
     protected void doBindOnOrder(ProfitSharingBindRequest request) {
-        JoinPaySharingBindStore.put(request.getOutTradeNo(), request.getScheme());
+        InMemoryProfitSharingBindStore.put(request.getOutTradeNo(), request.getScheme());
     }
 
     @Override

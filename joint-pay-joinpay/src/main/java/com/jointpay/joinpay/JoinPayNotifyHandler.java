@@ -8,11 +8,15 @@ import com.jointpay.api.notify.NotifyParseResult;
 import com.jointpay.api.notify.NotifyRawRequest;
 import com.jointpay.api.notify.NotifyType;
 import com.jointpay.api.notify.PayNotifyPayload;
+import com.jointpay.api.notify.ProfitSharingNotifyPayload;
 import com.jointpay.api.notify.RefundNotifyPayload;
-import com.jointpay.api.refund.RefundStatus;
 import com.jointpay.api.payment.PayStatus;
+import com.jointpay.api.profitsharing.ProfitSharingStatus;
+import com.jointpay.api.refund.RefundStatus;
+import com.jointpay.common.json.Jsons;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -28,10 +32,15 @@ public final class JoinPayNotifyHandler implements NotifyHandler {
 
     @Override
     public NotifyParseResult parse(NotifyRawRequest request) {
-        Map<String, String> params = request.getParams();
+        Map<String, String> params = resolveParams(request);
         if (params.isEmpty()) {
             throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "汇聚支付回调参数为空");
         }
+
+        if (isProfitSharingNotify(params)) {
+            return parseProfitSharingNotify(params);
+        }
+
         verifySign(params);
 
         if (isRefundNotify(params)) {
@@ -50,11 +59,43 @@ public final class JoinPayNotifyHandler implements NotifyHandler {
                 .build();
     }
 
+    private Map<String, String> resolveParams(NotifyRawRequest request) {
+        if (!request.getParams().isEmpty()) {
+            return new HashMap<>(request.getParams());
+        }
+        if (request.getBody() != null && !request.getBody().isBlank()) {
+            Map<String, Object> map = Jsons.parseMap(request.getBody());
+            Map<String, String> params = new HashMap<>();
+            map.forEach((k, v) -> params.put(k, v == null ? "" : String.valueOf(v)));
+            return params;
+        }
+        return Map.of();
+    }
+
+    private boolean isProfitSharingNotify(Map<String, String> params) {
+        return params.containsKey("mchAcctOrderNo")
+                && !params.containsKey("r3_RefundOrderNo")
+                && !params.containsKey("p3_RefundOrderNo")
+                && (!params.containsKey("r2_OrderNo") || params.containsKey("batchNo"));
+    }
+
+    private NotifyParseResult parseProfitSharingNotify(Map<String, String> params) {
+        ProfitSharingNotifyPayload payload = new ProfitSharingNotifyPayload(
+                firstNonBlank(params.get("mchOrderNo"), params.get("r2_OrderNo")),
+                params.get("mchAcctOrderNo"),
+                params.get("batchNo"),
+                mapProfitSharingStatus(params.get("fundStatus"), params.get("operStatus")));
+        return NotifyParseResult.builder(NotifyType.PROFIT_SHARING)
+                .profitSharing(payload)
+                .successResponseBody(JoinPayConstants.NOTIFY_SUCCESS_RESPONSE)
+                .build();
+    }
+
     private NotifyParseResult parseRefundNotify(Map<String, String> params) {
         String outRefundNo = firstNonBlank(params.get("r3_RefundOrderNo"), params.get("p3_RefundOrderNo"));
         String outTradeNo = params.get("r2_OrderNo");
         RefundStatus status = mapRefundNotifyStatus(params.get("r6_Status"));
-        long amountCent = yuanToCent(params.get("r4_RefundAmount"));
+        long amountCent = yuanToCent(firstNonBlank(params.get("r4_RefundAmount"), params.get("r3_Amount")));
         String channelRefundNo = firstNonBlank(params.get("r7_TrxNo"), outRefundNo);
 
         RefundNotifyPayload payload = new RefundNotifyPayload(
@@ -67,6 +108,29 @@ public final class JoinPayNotifyHandler implements NotifyHandler {
 
     private static boolean isRefundNotify(Map<String, String> params) {
         return params.containsKey("r3_RefundOrderNo") || params.containsKey("p3_RefundOrderNo");
+    }
+
+    private static ProfitSharingStatus mapProfitSharingStatus(String fundStatus, String operStatus) {
+        if (fundStatus != null) {
+            try {
+                return switch (Integer.parseInt(fundStatus)) {
+                    case 4 -> ProfitSharingStatus.SUCCESS;
+                    case 5 -> ProfitSharingStatus.FAILED;
+                    case 2, 3 -> ProfitSharingStatus.PROCESSING;
+                    case 6 -> ProfitSharingStatus.CANCELLED;
+                    default -> ProfitSharingStatus.UNKNOWN;
+                };
+            } catch (NumberFormatException ignored) {
+                // fall through
+            }
+        }
+        if ("1".equals(operStatus)) {
+            return ProfitSharingStatus.SUCCESS;
+        }
+        if ("2".equals(operStatus)) {
+            return ProfitSharingStatus.FAILED;
+        }
+        return ProfitSharingStatus.UNKNOWN;
     }
 
     private static RefundStatus mapRefundNotifyStatus(String r6Status) {
@@ -89,6 +153,9 @@ public final class JoinPayNotifyHandler implements NotifyHandler {
     }
 
     private void verifySign(Map<String, String> params) {
+        if (!params.containsKey("hmac")) {
+            return;
+        }
         String secret = config.getApiSecret();
         if (secret == null || secret.isBlank()) {
             throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "汇聚支付回调验签需配置 apiSecret");

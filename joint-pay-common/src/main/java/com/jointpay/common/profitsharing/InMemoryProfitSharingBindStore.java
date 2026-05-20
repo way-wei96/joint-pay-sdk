@@ -1,4 +1,4 @@
-package com.jointpay.joinpay;
+package com.jointpay.common.profitsharing;
 
 import com.jointpay.api.profitsharing.ProfitSharingScheme;
 
@@ -6,13 +6,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 进程内临时存储「下单绑分账」方案，供预下单阶段读取（单机场景；集群请业务方自行持有方案）。
+ * 进程内「下单绑分账」方案存储（单机适用；集群部署请由业务方自行持有方案）。
  */
-public final class JoinPaySharingBindStore {
+public final class InMemoryProfitSharingBindStore {
 
     private static final Map<String, ProfitSharingScheme> BINDINGS = new ConcurrentHashMap<>();
 
-    private JoinPaySharingBindStore() {
+    private InMemoryProfitSharingBindStore() {
     }
 
     public static void put(String outTradeNo, ProfitSharingScheme scheme) {
@@ -23,7 +23,8 @@ public final class JoinPaySharingBindStore {
         return BINDINGS.get(outTradeNo);
     }
 
-    public static ProfitSharingScheme remove(String outTradeNo) {
+    /** 取出并移除，避免重复应用到多笔订单。 */
+    public static ProfitSharingScheme take(String outTradeNo) {
         return BINDINGS.remove(outTradeNo);
     }
 }

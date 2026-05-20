@@ -8,12 +8,14 @@ public final class NotifyParseResult {
     private final NotifyType type;
     private final PayNotifyPayload pay;
     private final RefundNotifyPayload refund;
+    private final ProfitSharingNotifyPayload profitSharing;
     private final String successResponseBody;
 
     private NotifyParseResult(Builder builder) {
         this.type = builder.type;
         this.pay = builder.pay;
         this.refund = builder.refund;
+        this.profitSharing = builder.profitSharing;
         this.successResponseBody = builder.successResponseBody;
     }
 
@@ -27,6 +29,10 @@ public final class NotifyParseResult {
 
     public RefundNotifyPayload getRefund() {
         return refund;
+    }
+
+    public ProfitSharingNotifyPayload getProfitSharing() {
+        return profitSharing;
     }
 
     /**
@@ -44,6 +50,7 @@ public final class NotifyParseResult {
         private final NotifyType type;
         private PayNotifyPayload pay;
         private RefundNotifyPayload refund;
+        private ProfitSharingNotifyPayload profitSharing;
         private String successResponseBody;
 
         private Builder(NotifyType type) {
@@ -57,6 +64,11 @@ public final class NotifyParseResult {
 
         public Builder refund(RefundNotifyPayload refund) {
             this.refund = refund;
+            return this;
+        }
+
+        public Builder profitSharing(ProfitSharingNotifyPayload profitSharing) {
+            this.profitSharing = profitSharing;
             return this;
         }
 

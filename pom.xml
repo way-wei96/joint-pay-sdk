@@ -20,6 +20,7 @@
         <module>joint-pay-huifu</module>
         <module>joint-pay-allinpay</module>
         <module>joint-pay-all</module>
+        <module>joint-pay-example</module>
     </modules>
 
     <properties>

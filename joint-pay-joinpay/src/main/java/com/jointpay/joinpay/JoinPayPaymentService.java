@@ -13,6 +13,8 @@ import com.jointpay.api.payment.PrepayResult;
 import com.jointpay.common.channel.ChannelApiClient;
 import com.jointpay.common.http.HttpResponse;
 import com.jointpay.common.json.Jsons;
+import com.jointpay.api.profitsharing.ProfitSharingScheme;
+import com.jointpay.common.profitsharing.InMemoryProfitSharingBindStore;
 import com.jointpay.common.payment.AbstractChannelPaymentService;
 
 import java.math.BigDecimal;
@@ -147,14 +149,27 @@ public final class JoinPayPaymentService extends AbstractChannelPaymentService {
         }
         params.put("q1_FrpCode", frpCode);
         params.put("qa_TradeMerchantNo", tradeMerchantNo);
+        applyBoundProfitSharing(request.getOutTradeNo(), params);
         request.getExtras().forEach((k, v) -> {
             if (!JoinPayConstants.EXTRA_FRP_CODE.equals(k)
                     && !JoinPayConstants.EXTRA_TRADE_MERCHANT_NO.equals(k)
+                    && !JoinPayConstants.EXTRA_PROFIT_SHARING_JSON.equals(k)
                     && v != null && !v.isBlank()) {
                 params.putIfAbsent(k, v);
             }
         });
         return params;
+    }
+
+    private void applyBoundProfitSharing(String outTradeNo, Map<String, String> params) {
+        ProfitSharingScheme scheme = InMemoryProfitSharingBindStore.take(outTradeNo);
+        if (scheme == null) {
+            return;
+        }
+        String json = JoinPaySharingSchemeEncoder.toJson(scheme);
+        params.put(JoinPayConstants.EXTRA_PROFIT_SHARING_JSON, json);
+        String mp = scheme.getSchemeId() == null ? "profitSharing" : "PS:" + scheme.getSchemeId();
+        params.put("p7_Mp", mp);
     }
 
     private PrepayResult toPrepayResult(String body) {

@@ -13,6 +13,9 @@ import com.jointpay.api.payment.PrepayResult;
 import com.jointpay.common.channel.ChannelApiClient;
 import com.jointpay.common.http.HttpResponse;
 import com.jointpay.common.json.Jsons;
+import com.jointpay.api.profitsharing.ProfitSharingScheme;
+import com.jointpay.common.profitsharing.InMemoryProfitSharingBindStore;
+import com.jointpay.common.json.Jsons;
 import com.jointpay.common.payment.AbstractChannelPaymentService;
 
 import java.util.HashMap;
@@ -45,6 +48,7 @@ public final class HuifuPaymentService extends AbstractChannelPaymentService {
         body.put("goods_desc", request.getSubject());
         body.put("notify_url", request.getNotifyUrl());
         body.put("pay_type", payType);
+        applyBoundProfitSharing(request.getOutTradeNo(), body);
         body.putAll(request.getExtras());
 
         HttpResponse response = apiClient.postJson(path, body);
@@ -154,6 +158,25 @@ public final class HuifuPaymentService extends AbstractChannelPaymentService {
                 channelTradeNo,
                 channelTradeNo,
                 payInfo == null ? Map.of() : Map.of("payInfo", payInfo));
+    }
+
+    private void applyBoundProfitSharing(String outTradeNo, Map<String, Object> body) {
+        ProfitSharingScheme scheme = InMemoryProfitSharingBindStore.take(outTradeNo);
+        if (scheme == null) {
+            return;
+        }
+        body.put("acct_split_bunch", Jsons.toJson(buildSplitBunch(scheme)));
+    }
+
+    private static java.util.List<Map<String, String>> buildSplitBunch(ProfitSharingScheme scheme) {
+        java.util.List<Map<String, String>> bunch = new java.util.ArrayList<>();
+        for (var p : scheme.getParticipants()) {
+            Map<String, String> item = new HashMap<>();
+            item.put("huifu_id", firstNonBlank(p.getMerchantId(), p.getAccountNo()));
+            item.put("div_amt", String.format("%.2f", p.getAmountCent() / 100.0));
+            bunch.add(item);
+        }
+        return bunch;
     }
 
     private static String firstNonBlank(String... values) {

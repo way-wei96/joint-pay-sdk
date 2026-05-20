@@ -13,6 +13,9 @@ public final class JoinPayConstants {
     public static final String API_VERSION = "2.1";
     public static final String CURRENCY_CNY = "1";
 
+    /** 预下单透传的分账方案 JSON（由 bindOnOrder 自动注入）。 */
+    public static final String EXTRA_PROFIT_SHARING_JSON = "profitSharingJson";
+
     /** 支付方式，如 ALIPAY_H5、WEIXIN_NATIVE，通过 {@code extras.frpCode} 传入。 */
     public static final String EXTRA_FRP_CODE = "frpCode";
     /** 报备商户号，可通过 {@code extras.tradeMerchantNo} 或 {@link com.jointpay.api.config.ChannelConfig#getAppId()} 传入。 */

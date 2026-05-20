@@ -6,5 +6,6 @@ package com.jointpay.api.notify;
 public enum NotifyType {
 
     PAY,
-    REFUND
+    REFUND,
+    PROFIT_SHARING
 }

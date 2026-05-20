@@ -48,7 +48,8 @@ joint-pay-sdk/
 ├── joint-pay-joinpay/   # 汇聚支付（骨架已接入）
 ├── joint-pay-huifu/     # 汇付天下（骨架已接入）
 ├── joint-pay-allinpay/  # 通联支付（骨架已接入）
-└── joint-pay-all/       # 聚合依赖，业务方一键引入三家渠道
+├── joint-pay-all/       # 聚合依赖，业务方一键引入三家渠道
+└── joint-pay-example/ # 使用示例（见 QuickStart）
 ```
 
 **当前进度**：
@@ -123,3 +124,5 @@ ProfitSharingResult ps = client.profitSharing().submit(
 ```
 
 **汇聚 OpenAPI 分账**需额外配置：`appId`、`privateKey`（RSA2）、`extras.openApiGateway`（默认 `https://api.huilianlink.com`，与交易网关 `www.joinpay.com` 不同）。
+
+**下单绑分账**：先 `profitSharing().bindOnOrder(...)`，再 `payment().prepay(...)`，方案会在预下单时自动透传（`InMemoryProfitSharingBindStore`，单机有效）。

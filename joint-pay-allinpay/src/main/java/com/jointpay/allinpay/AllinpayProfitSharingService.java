@@ -14,6 +14,7 @@ import com.jointpay.api.profitsharing.ProfitSharingRollbackRequest;
 import com.jointpay.api.profitsharing.ProfitSharingStatus;
 import com.jointpay.common.json.Jsons;
 import com.jointpay.common.profitsharing.AbstractChannelProfitSharingService;
+import com.jointpay.common.profitsharing.InMemoryProfitSharingBindStore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,7 +37,7 @@ public final class AllinpayProfitSharingService extends AbstractChannelProfitSha
 
     @Override
     protected void doBindOnOrder(ProfitSharingBindRequest request) {
-        throw new JointPayException(ErrorCode.CHANNEL_UNSUPPORTED, "通联支付下单绑分账待接入");
+        InMemoryProfitSharingBindStore.put(request.getOutTradeNo(), request.getScheme());
     }
 
     @Override

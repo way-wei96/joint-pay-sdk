@@ -14,9 +14,15 @@ import com.jointpay.common.channel.ChannelApiClient;
 import com.jointpay.common.crypto.Md5SignUtil;
 import com.jointpay.common.http.HttpResponse;
 import com.jointpay.common.json.Jsons;
+import com.jointpay.api.profitsharing.ProfitSharingScheme;
+import com.jointpay.common.profitsharing.InMemoryProfitSharingBindStore;
+import com.jointpay.common.json.Jsons;
 import com.jointpay.common.payment.AbstractChannelPaymentService;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -50,6 +56,7 @@ public final class AllinpayPaymentService extends AbstractChannelPaymentService 
         params.put("body", nullToEmpty(request.getSubject()));
         params.put("paytype", payType);
         params.put("signtype", signType);
+        applyBoundProfitSharing(request.getOutTradeNo(), params);
         params.put("sign", sign(params));
 
         HttpResponse response = apiClient.postJson(path, params);
@@ -174,6 +181,25 @@ public final class AllinpayPaymentService extends AbstractChannelPaymentService 
                 channelTradeNo,
                 channelTradeNo,
                 payInfo == null ? Map.of() : Map.of("payInfo", payInfo));
+    }
+
+    private void applyBoundProfitSharing(String outTradeNo, Map<String, String> params) {
+        ProfitSharingScheme scheme = InMemoryProfitSharingBindStore.take(outTradeNo);
+        if (scheme == null) {
+            return;
+        }
+        params.put("sharelist", Jsons.toJson(toShareList(scheme)));
+    }
+
+    private static List<Map<String, String>> toShareList(ProfitSharingScheme scheme) {
+        List<Map<String, String>> list = new ArrayList<>();
+        for (var p : scheme.getParticipants()) {
+            Map<String, String> item = new HashMap<>();
+            item.put("cusid", firstNonBlank(p.getMerchantId(), p.getAccountNo(), p.getParticipantId()));
+            item.put("trxamt", String.valueOf(p.getAmountCent()));
+            list.add(item);
+        }
+        return list;
     }
 
     private static String firstNonBlank(String... values) {
