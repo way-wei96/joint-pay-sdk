@@ -14,6 +14,8 @@
 
     <modules>
         <module>joint-pay-api</module>
+        <module>joint-pay-common</module>
+        <module>joint-pay-core</module>
     </modules>
 
     <properties>
