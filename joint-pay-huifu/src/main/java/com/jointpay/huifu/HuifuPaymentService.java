@@ -12,10 +12,9 @@ import com.jointpay.api.payment.PrepayRequest;
 import com.jointpay.api.payment.PrepayResult;
 import com.jointpay.common.channel.ChannelApiClient;
 import com.jointpay.common.http.HttpResponse;
-import com.jointpay.common.json.Jsons;
 import com.jointpay.api.profitsharing.ProfitSharingScheme;
-import com.jointpay.common.profitsharing.ProfitSharingBindStores;
 import com.jointpay.common.json.Jsons;
+import com.jointpay.common.profitsharing.ProfitSharingBindStores;
 import com.jointpay.common.payment.AbstractChannelPaymentService;
 
 import java.util.HashMap;

@@ -2,6 +2,7 @@ package com.jointpay.example;
 
 import com.jointpay.api.PayChannel;
 import com.jointpay.api.config.ChannelConfig;
+import com.jointpay.api.config.ChannelExtras;
 import com.jointpay.api.profitsharing.ProfitSharingBindRequest;
 import com.jointpay.api.profitsharing.ProfitSharingParticipant;
 import com.jointpay.api.profitsharing.ProfitSharingScheme;
@@ -48,7 +49,7 @@ public final class QuickStart {
                 .amountCent(100L)
                 .subject("演示商品")
                 .notifyUrl("https://your.domain/pay/notify")
-                .extras(Map.of("frpCode", "ALIPAY_H5"))
+                .extras(Map.of(ChannelExtras.JoinPay.FRP_CODE, "ALIPAY_H5"))
                 .build();
 
         System.out.println("预下单结果: " + client.payment().prepay(prepay));

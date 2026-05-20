@@ -5,7 +5,9 @@ import com.jointpay.api.config.ChannelConfig;
 import com.jointpay.api.notify.NotifyParseResult;
 import com.jointpay.api.notify.NotifyRawRequest;
 import com.jointpay.api.notify.NotifyType;
+import com.jointpay.api.payment.PayStatus;
 import com.jointpay.api.profitsharing.ProfitSharingStatus;
+import com.jointpay.api.refund.RefundStatus;
 import com.jointpay.common.crypto.Rsa2SignUtil;
 import org.junit.jupiter.api.Test;
 
@@ -39,6 +41,47 @@ class JoinPayNotifyHandlerTest {
         assertEquals("SHARE001", result.getProfitSharing().getOutSharingNo());
         assertEquals(ProfitSharingStatus.SUCCESS, result.getProfitSharing().getStatus());
         assertEquals(JoinPayConstants.NOTIFY_SUCCESS_RESPONSE, result.getSuccessResponseBody());
+    }
+
+    @Test
+    void parsesPayNotify() {
+        ChannelConfig config = ChannelConfig.builder(PayChannel.JOINPAY)
+                .merchantId("M1")
+                .build();
+        JoinPayNotifyHandler handler = new JoinPayNotifyHandler(config);
+
+        NotifyParseResult result = handler.parse(NotifyRawRequest.builder()
+                .params(Map.of(
+                        "r2_OrderNo", "ORDER001",
+                        "r7_TrxNo", "JP001",
+                        "r6_Status", "100",
+                        "r3_Amount", "1.00"))
+                .build());
+
+        assertEquals(NotifyType.PAY, result.getType());
+        assertEquals("ORDER001", result.getPay().getOutTradeNo());
+        assertEquals(PayStatus.SUCCESS, result.getPay().getStatus());
+        assertEquals(100L, result.getPay().getAmountCent());
+    }
+
+    @Test
+    void parsesRefundNotify() {
+        ChannelConfig config = ChannelConfig.builder(PayChannel.JOINPAY)
+                .merchantId("M1")
+                .build();
+        JoinPayNotifyHandler handler = new JoinPayNotifyHandler(config);
+
+        NotifyParseResult result = handler.parse(NotifyRawRequest.builder()
+                .params(Map.of(
+                        "r2_OrderNo", "ORDER001",
+                        "r3_RefundOrderNo", "REFUND001",
+                        "r6_Status", "100",
+                        "r4_RefundAmount", "1.00"))
+                .build());
+
+        assertEquals(NotifyType.REFUND, result.getType());
+        assertEquals("REFUND001", result.getRefund().getOutRefundNo());
+        assertEquals(RefundStatus.SUCCESS, result.getRefund().getStatus());
     }
 
     @Test

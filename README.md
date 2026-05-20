@@ -143,6 +143,14 @@ ProfitSharingResult ps = client.profitSharing().submit(
 
 仅接一家渠道时，可只依赖 `joint-pay-core` + 对应 `joint-pay-xxx` 模块，不必引入 `joint-pay-all`。
 
+`extras` 键名也可使用 `com.jointpay.api.config.ChannelExtras` 中的常量（如 `ChannelExtras.JoinPay.FRP_CODE`）。
+
+**自定义 HTTP 客户端**（代理、超时、单测 Mock）：
+
+```java
+HttpTransports.use(() -> new JdkHttpTransport(Duration.ofSeconds(10)));
+```
+
 ### 开发与 CI
 
 ```bash

@@ -8,7 +8,7 @@ import com.jointpay.common.http.HttpMethod;
 import com.jointpay.common.http.HttpRequest;
 import com.jointpay.common.http.HttpResponse;
 import com.jointpay.common.http.HttpTransport;
-import com.jointpay.common.http.JdkHttpTransport;
+import com.jointpay.common.http.HttpTransports;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +22,7 @@ public class ChannelApiClient {
     private final HttpTransport httpTransport;
 
     public ChannelApiClient(ChannelConfig config) {
-        this(config, new JdkHttpTransport());
+        this(config, HttpTransports.create());
     }
 
     public ChannelApiClient(ChannelConfig config, HttpTransport httpTransport) {
