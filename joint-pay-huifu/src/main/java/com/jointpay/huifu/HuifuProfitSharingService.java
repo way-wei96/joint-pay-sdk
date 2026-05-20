@@ -29,6 +29,8 @@ public final class HuifuProfitSharingService extends AbstractChannelProfitSharin
 
     static final String DEFAULT_SUBMIT_PATH = "/v2/trade/acctpayment/pay";
     static final String DEFAULT_QUERY_PATH = "/v2/trade/acctpayment/query";
+    static final String DEFAULT_CANCEL_PATH = "/v2/trade/acctpayment/refund";
+    static final String DEFAULT_ROLLBACK_PATH = "/v2/trade/acctpayment/rollback";
 
     private final ChannelConfig config;
     private final ChannelApiClient apiClient;
@@ -77,12 +79,36 @@ public final class HuifuProfitSharingService extends AbstractChannelProfitSharin
 
     @Override
     protected ProfitSharingResult doCancel(ProfitSharingCancelRequest request) {
-        throw new JointPayException(ErrorCode.CHANNEL_UNSUPPORTED, "汇付天下分账撤销待接入");
+        Map<String, Object> body = new HashMap<>();
+        body.put("huifu_id", config.getMerchantId());
+        if (request.getOutSharingNo() != null) {
+            body.put("req_seq_id", request.getOutSharingNo());
+        }
+        if (request.getChannelSharingNo() != null) {
+            body.put("hf_seq_id", request.getChannelSharingNo());
+        }
+        HttpResponse response = apiClient.postJson(DEFAULT_CANCEL_PATH, body);
+        return toOperateResult(request.getOutSharingNo(), response.getBody());
     }
 
     @Override
     protected ProfitSharingResult doRollback(ProfitSharingRollbackRequest request) {
-        throw new JointPayException(ErrorCode.CHANNEL_UNSUPPORTED, "汇付天下分账回退待接入");
+        Map<String, Object> body = new HashMap<>();
+        body.put("huifu_id", config.getMerchantId());
+        body.put("req_seq_id", request.getOutRollbackNo());
+        body.put("org_req_seq_id", request.getOutSharingNo());
+        body.put("ord_amt", String.format("%.2f", request.getRollbackAmountCent() / 100.0));
+        HttpResponse response = apiClient.postJson(DEFAULT_ROLLBACK_PATH, body);
+        return toOperateResult(request.getOutRollbackNo(), response.getBody());
+    }
+
+    private ProfitSharingResult toOperateResult(String outNo, String body) {
+        Map<String, Object> map = Jsons.parseMap(body);
+        assertHuifuOk(map);
+        return new ProfitSharingResult(
+                outNo,
+                firstNonBlank(Jsons.text(map, "hf_seq_id"), outNo),
+                ProfitSharingStatus.PROCESSING);
     }
 
     private List<Map<String, String>> toSplitBunch(List<ProfitSharingParticipant> participants) {

@@ -64,12 +64,56 @@ public final class JoinPayProfitSharingService extends AbstractChannelProfitShar
 
     @Override
     protected ProfitSharingResult doCancel(ProfitSharingCancelRequest request) {
-        throw new JointPayException(ErrorCode.CHANNEL_UNSUPPORTED, "汇聚支付分账撤销待接入");
+        Map<String, Object> biz = new HashMap<>();
+        if (request.getOutSharingNo() != null && !request.getOutSharingNo().isBlank()) {
+            biz.put("mchAcctOrderNo", request.getOutSharingNo());
+        }
+        if (request.getChannelSharingNo() != null && !request.getChannelSharingNo().isBlank()) {
+            biz.put("batchNo", request.getChannelSharingNo());
+        }
+        Map<String, Object> resp = openApi.post(JoinPayOpenApiConstants.ACCT_ORDER_CANCEL, biz);
+        return toOperateResult(request.getOutSharingNo(), resp);
     }
 
     @Override
     protected ProfitSharingResult doRollback(ProfitSharingRollbackRequest request) {
-        throw new JointPayException(ErrorCode.CHANNEL_UNSUPPORTED, "汇聚支付分账回退待接入");
+        String accountNo = firstNonBlank(
+                request.getExtras().get("accountNo"),
+                request.getParticipantId());
+        if (accountNo == null) {
+            throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "汇聚分账回退需提供 participantId 或 extras.accountNo");
+        }
+        Map<String, String> item = new HashMap<>();
+        item.put("accountNo", accountNo);
+        item.put("amount", toAmountYuan(request.getRollbackAmountCent()));
+        item.put("description", request.getReason() == null ? "分账回退" : request.getReason());
+
+        Map<String, Object> biz = new HashMap<>();
+        biz.put("mchAcctOrderNo", request.getOutSharingNo());
+        biz.put("mchAcctRefundOrderNo", request.getOutRollbackNo());
+        String batchNo = request.getExtras().get("batchNo");
+        if (batchNo != null && !batchNo.isBlank()) {
+            biz.put("batchNo", batchNo);
+        }
+        String notifyUrl = request.getExtras().get("notifyUrl");
+        if (notifyUrl != null && !notifyUrl.isBlank()) {
+            biz.put("notifyUrl", notifyUrl);
+        }
+        biz.put("acctInfos", List.of(item));
+
+        Map<String, Object> resp = openApi.post(JoinPayOpenApiConstants.ACCT_REFUND_SUBMIT, biz);
+        return toOperateResult(request.getOutRollbackNo(), resp);
+    }
+
+    private ProfitSharingResult toOperateResult(String outNo, Map<String, Object> resp) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = resp.get("data") instanceof Map<?, ?> m
+                ? (Map<String, Object>) m
+                : Map.of();
+        return new ProfitSharingResult(
+                firstNonBlank(Jsons.text(data, "mchAcctOrderNo"), Jsons.text(data, "mchAcctRefundOrderNo"), outNo),
+                firstNonBlank(Jsons.text(data, "batchNo"), outNo),
+                ProfitSharingStatus.PROCESSING);
     }
 
     private Map<String, Object> buildSubmitBizContent(ProfitSharingRequest request) {
