@@ -2,6 +2,7 @@ package com.jointpay.allinpay;
 
 import com.jointpay.api.PayChannel;
 import com.jointpay.api.config.ChannelConfig;
+import com.jointpay.api.payment.PaymentService;
 import com.jointpay.core.StubChannelPayClient;
 
 public final class AllinpayClient extends StubChannelPayClient {
@@ -13,5 +14,10 @@ public final class AllinpayClient extends StubChannelPayClient {
     @Override
     protected PayChannel supportedChannel() {
         return PayChannel.ALLINPAY;
+    }
+
+    @Override
+    protected PaymentService createPaymentService(String channelName) {
+        return new AllinpayPaymentService(getConfig());
     }
 }

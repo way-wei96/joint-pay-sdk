@@ -51,7 +51,7 @@ joint-pay-sdk/
 └── joint-pay-all/       # 聚合依赖，业务方一键引入三家渠道
 ```
 
-**当前进度（支付基础 P1）**：三家渠道模块已挂载 `PayClientProvider`（ServiceLoader）；具体支付/退款/回调方法仍为占位，待并行实现。
+**当前进度（支付基础 P1）**：三家渠道已并行接入 **预下单/创建订单** 骨架；汇聚（uniPayApi + MD5）实现较完整，汇付/通联需按商户文档配置 `gatewayUrl` 与 `extras`；订单查询、退款、回调待实现。
 
 ### 快速开始
 
@@ -69,4 +69,22 @@ ChannelConfig config = ChannelConfig.builder(PayChannel.JOINPAY)
         .merchantId("your-merchant-id")
         .build();
 PayClient client = PayClientFactory.create(config);
+```
+
+**汇聚预下单示例**（`extras.frpCode` 必填，如 `ALIPAY_H5`）：
+
+```java
+ChannelConfig config = ChannelConfig.builder(PayChannel.JOINPAY)
+        .merchantId("商户号")
+        .apiSecret("MD5密钥")
+        .appId("报备商户号")
+        .build();
+PrepayRequest request = PrepayRequest.builder()
+        .outTradeNo("ORDER001")
+        .amountCent(100L)
+        .subject("测试商品")
+        .notifyUrl("https://your.domain/notify")
+        .extras(Map.of("frpCode", "ALIPAY_H5"))
+        .build();
+PrepayResult result = PayClientFactory.create(config).payment().prepay(request);
 ```

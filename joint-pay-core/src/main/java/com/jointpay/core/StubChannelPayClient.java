@@ -9,7 +9,7 @@ import com.jointpay.core.support.UnsupportedPaymentService;
 import com.jointpay.core.support.UnsupportedRefundService;
 
 /**
- * 渠道骨架客户端：挂载占位 SPI，便于三家并行迭代真实实现。
+ * 渠道骨架客户端：子类可覆盖 {@link #createPaymentService()} 等挂载真实实现。
  */
 public abstract class StubChannelPayClient extends AbstractPayClient {
 
@@ -20,9 +20,21 @@ public abstract class StubChannelPayClient extends AbstractPayClient {
     protected StubChannelPayClient(ChannelConfig config) {
         super(config);
         String channelName = supportedChannel().getDisplayName();
-        this.payment = new UnsupportedPaymentService(channelName);
-        this.refund = new UnsupportedRefundService(channelName);
-        this.notifyHandler = new UnsupportedNotifyHandler(channelName);
+        this.payment = createPaymentService(channelName);
+        this.refund = createRefundService(channelName);
+        this.notifyHandler = createNotifyHandler(channelName);
+    }
+
+    protected PaymentService createPaymentService(String channelName) {
+        return new UnsupportedPaymentService(channelName);
+    }
+
+    protected RefundService createRefundService(String channelName) {
+        return new UnsupportedRefundService(channelName);
+    }
+
+    protected NotifyHandler createNotifyHandler(String channelName) {
+        return new UnsupportedNotifyHandler(channelName);
     }
 
     @Override
