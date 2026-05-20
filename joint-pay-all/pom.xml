@@ -18,22 +18,23 @@
         <dependency>
             <groupId>com.jointpay</groupId>
             <artifactId>joint-pay-core</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.jointpay</groupId>
             <artifactId>joint-pay-joinpay</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.jointpay</groupId>
             <artifactId>joint-pay-huifu</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.jointpay</groupId>
             <artifactId>joint-pay-allinpay</artifactId>
-            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

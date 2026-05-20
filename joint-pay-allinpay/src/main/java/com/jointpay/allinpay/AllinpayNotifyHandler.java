@@ -39,11 +39,11 @@ public final class AllinpayNotifyHandler implements NotifyHandler {
         }
         verifySignIfPresent(params);
 
-        if (isProfitSharingNotify(params)) {
-            return parseProfitSharingNotify(params);
-        }
         if (isRefundNotify(params)) {
             return parseRefundNotify(params);
+        }
+        if (isProfitSharingNotify(params)) {
+            return parseProfitSharingNotify(params);
         }
 
         String outTradeNo = firstNonBlank(params.get("reqsn"), params.get("cusorderid"));
@@ -75,9 +75,6 @@ public final class AllinpayNotifyHandler implements NotifyHandler {
     }
 
     private static boolean isRefundNotify(Map<String, String> params) {
-        if (isProfitSharingNotify(params)) {
-            return false;
-        }
         if (params.containsKey("refundno")) {
             return true;
         }
@@ -114,6 +111,9 @@ public final class AllinpayNotifyHandler implements NotifyHandler {
     }
 
     private static boolean isProfitSharingNotify(Map<String, String> params) {
+        if (isRefundNotify(params)) {
+            return false;
+        }
         if (params.containsKey("shareno") || params.containsKey("shareid")) {
             return true;
         }

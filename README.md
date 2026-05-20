@@ -132,6 +132,17 @@ ProfitSharingResult ps = client.profitSharing().submit(
 
 **回调解析**：`NotifySupport.parse(client, raw)`，支持支付 / 退款 / 分账；`NotifySupport.ackBody(result)` 获取应答体（见 `NotifyHandlerDemo`）。
 
+### 渠道配置速查
+
+| 渠道 | `merchantId` | 常用配置 | `extras` 常用键 |
+|------|--------------|----------|-----------------|
+| 汇聚 | 商户号 | `apiSecret`（MD5）、`appId`（报备商户号） | `frpCode`（必填，如 `ALIPAY_H5`）、`openApiGateway` |
+| 汇聚 OpenAPI 分账 | 同上 | `privateKey`、`publicKey` | 网关默认 `https://api.huilianlink.com` |
+| 汇付 | `huifu_id` | `gatewayUrl` 指向斗拱网关 | `payType`、`apiPath`、`queryPath` |
+| 通联 | `cusid` | `apiSecret`、`gatewayUrl`、`appId`（`proid`） | `paytype`（必填）、`apiPath` |
+
+仅接一家渠道时，可只依赖 `joint-pay-core` + 对应 `joint-pay-xxx` 模块，不必引入 `joint-pay-all`。
+
 ### 开发与 CI
 
 ```bash
