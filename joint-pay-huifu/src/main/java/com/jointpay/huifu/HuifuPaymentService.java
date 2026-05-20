@@ -88,7 +88,8 @@ public final class HuifuPaymentService extends AbstractChannelPaymentService {
         if (outTradeNo == null || outTradeNo.isBlank()) {
             throw new JointPayException(ErrorCode.INVALID_ARGUMENT, "汇付查单需提供 outTradeNo（req_seq_id）");
         }
-        String path = HuifuConstants.DEFAULT_QUERY_PATH;
+        String path = request.getExtras().getOrDefault(
+                HuifuConstants.EXTRA_QUERY_PATH, HuifuConstants.DEFAULT_QUERY_PATH);
         Map<String, Object> data = new HashMap<>();
         data.put("huifu_id", config.getMerchantId());
         data.put("org_req_seq_id", outTradeNo);
