@@ -51,7 +51,9 @@ joint-pay-sdk/
 └── joint-pay-all/       # 聚合依赖，业务方一键引入三家渠道
 ```
 
-**当前进度（支付基础 P1）**：预下单、下单、查单、退款、退款查询、支付/退款回调已三家并行接入；汇聚对接较完整；分账（P2）未开始。
+**当前进度**：
+- **P1 支付基础**：预下单、下单、查单、退款、回调已三家并行接入（汇聚较完整）
+- **P2 分账**：`profitsharing` 领域模型与 `ProfitSharingService` 已定义，三家渠道骨架已挂载，具体 OpenAPI 待按文档接入
 
 ### 快速开始
 
@@ -99,4 +101,23 @@ RefundRequest refund = RefundRequest.builder()
         .extras(Map.of("notifyUrl", "https://your.domain/refund-notify"))
         .build();
 RefundResult refundResult = PayClientFactory.create(config).refund().refund(refund);
+```
+
+**分账示例**（契约已就绪，渠道实现接入前调用将返回 `CHANNEL_UNSUPPORTED`）：
+
+```java
+ProfitSharingScheme scheme = new ProfitSharingScheme(
+        "SCHEME001",
+        List.of(ProfitSharingParticipant.builder()
+                .participantId("P1")
+                .merchantId("子商户号")
+                .amountCent(30L)
+                .build()),
+        Map.of());
+ProfitSharingResult ps = client.profitSharing().submit(
+        ProfitSharingRequest.builder()
+                .outTradeNo("ORDER001")
+                .outSharingNo("SHARE001")
+                .scheme(scheme)
+                .build());
 ```

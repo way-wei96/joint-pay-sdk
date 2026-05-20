@@ -3,6 +3,7 @@ package com.jointpay.api;
 import com.jointpay.api.config.ChannelConfig;
 import com.jointpay.api.notify.NotifyHandler;
 import com.jointpay.api.payment.PaymentService;
+import com.jointpay.api.profitsharing.ProfitSharingService;
 import com.jointpay.api.refund.RefundService;
 
 /**
@@ -21,4 +22,6 @@ public interface PayClient {
     RefundService refund();
 
     NotifyHandler notifyHandler();
+
+    ProfitSharingService profitSharing();
 }

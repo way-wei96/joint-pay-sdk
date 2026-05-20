@@ -4,6 +4,7 @@ import com.jointpay.api.PayChannel;
 import com.jointpay.api.config.ChannelConfig;
 import com.jointpay.api.notify.NotifyHandler;
 import com.jointpay.api.payment.PaymentService;
+import com.jointpay.api.profitsharing.ProfitSharingService;
 import com.jointpay.api.refund.RefundService;
 import com.jointpay.core.StubChannelPayClient;
 
@@ -26,6 +27,11 @@ public final class HuifuPayClient extends StubChannelPayClient {
     @Override
     protected RefundService createRefundService(String channelName) {
         return new HuifuRefundService(getConfig());
+    }
+
+    @Override
+    protected ProfitSharingService createProfitSharingService(String channelName) {
+        return new HuifuProfitSharingService(getConfig());
     }
 
     @Override

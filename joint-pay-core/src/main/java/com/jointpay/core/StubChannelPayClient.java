@@ -3,9 +3,11 @@ package com.jointpay.core;
 import com.jointpay.api.config.ChannelConfig;
 import com.jointpay.api.notify.NotifyHandler;
 import com.jointpay.api.payment.PaymentService;
+import com.jointpay.api.profitsharing.ProfitSharingService;
 import com.jointpay.api.refund.RefundService;
 import com.jointpay.core.support.UnsupportedNotifyHandler;
 import com.jointpay.core.support.UnsupportedPaymentService;
+import com.jointpay.core.support.UnsupportedProfitSharingService;
 import com.jointpay.core.support.UnsupportedRefundService;
 
 /**
@@ -16,6 +18,7 @@ public abstract class StubChannelPayClient extends AbstractPayClient {
     private final PaymentService payment;
     private final RefundService refund;
     private final NotifyHandler notifyHandler;
+    private final ProfitSharingService profitSharing;
 
     protected StubChannelPayClient(ChannelConfig config) {
         super(config);
@@ -23,6 +26,7 @@ public abstract class StubChannelPayClient extends AbstractPayClient {
         this.payment = createPaymentService(channelName);
         this.refund = createRefundService(channelName);
         this.notifyHandler = createNotifyHandler(channelName);
+        this.profitSharing = createProfitSharingService(channelName);
     }
 
     protected PaymentService createPaymentService(String channelName) {
@@ -35,6 +39,10 @@ public abstract class StubChannelPayClient extends AbstractPayClient {
 
     protected NotifyHandler createNotifyHandler(String channelName) {
         return new UnsupportedNotifyHandler(channelName);
+    }
+
+    protected ProfitSharingService createProfitSharingService(String channelName) {
+        return new UnsupportedProfitSharingService(channelName);
     }
 
     @Override
@@ -50,5 +58,10 @@ public abstract class StubChannelPayClient extends AbstractPayClient {
     @Override
     public NotifyHandler notifyHandler() {
         return notifyHandler;
+    }
+
+    @Override
+    public ProfitSharingService profitSharing() {
+        return profitSharing;
     }
 }
